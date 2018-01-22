@@ -143,7 +143,7 @@ applicationCache.onUpdateReady = function() {
 
 例如，如果本地缓存的容量非常大（譬如超过100M），本地缓存的更新工作将需要相对较长的时间，而且还会把浏览器给锁住。这时最好有一个提示，告诉用户正在进行本地缓存的更新。
 
-```javascript
+```js
 applicationCache.onUpdateReady = function() {
     // 本地缓存已被更新，通知用户
     alert('正在更新本地缓存...');
