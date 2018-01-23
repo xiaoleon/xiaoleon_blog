@@ -9,3 +9,6 @@ comment: Comments
 pagination:
   prev: Prev
   next: Next
+
+link:
+  home: Link to Home

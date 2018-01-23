@@ -13,3 +13,6 @@ archives: 归档
 pagination:
   prev: 上一页
   next: 下一页
+
+link:
+  home: 返回首页

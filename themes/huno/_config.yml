@@ -8,7 +8,7 @@ menu:
 favicon: /favicon.ico
 
 # Site logo
-# logo: /avatar.png
+logo: /images/logo.jpg
 
 # Enable Mathjax
 mathjax: false
