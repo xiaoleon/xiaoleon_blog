@@ -16,27 +16,26 @@ var post = page;
       <span class="post-meta__tags tags">
 
           <% if (post.categories && post.categories.length > 0){ %>
+            &#8226; <%= __('category_title')%>:
             <font class="categories">
-            &#8226; 分类:
-            <%- list_categories(post.categories, {
-              show_count: false,
-              class: 'categories',
-              style: 'none'
-            }) %>
-            </font>
-          <% } %>
-
-          <% if (post.tags && post.tags.length > 0){ %>
-             &#8226; 标签:
-            <font class="tags">
-              <%- list_tags(post.tags, {
+              <%- list_categories(post.categories, {
                 show_count: false,
-                style: 'none',
-                class: 'tags'
+                class: 'categories',
+                style: 'none'
               }) %>
             </font>
           <% } %>
 
+          <% if (post.tags && post.tags.length > 0){ %>
+            &#8226; <%= __('tag_title')%>:
+            <font class="tags">
+              <%- list_tags(post.tags, {
+                show_count: false,
+                class: 'tags',
+                style: 'none'
+              }) %>
+            </font>
+          <% } %>
       </span>
     </div>
     

@@ -7,6 +7,10 @@
     <%
     var title = page.title || '';
 
+    if (is_post()) {
+      title = page.title.substr(page.title.indexOf(' ') + 1);
+    }
+
     if (is_archive()) {
       title = __('archive_title');
       if (is_month()) {
@@ -22,10 +26,7 @@
 
     description = '';
     if (is_home()) {
-      title = config.title;
-      if (page.current && page.current > 1) {
-        title = 'page ' + page.current + ' | ' + config.title;
-      }
+      title = 'Home | ' + config.title;
     } else if (page.current && page.current > 1) {
       title = 'page ' + page.current + ' | ' + title + ' | ' + config.title;
     } else if (is_post()) {
@@ -41,10 +42,7 @@
     <% if (config.author){ %>
       <meta name="author" content="<%= config.author %>">
     <% } %>
-    <% if ( is_home() && config.description){ %>
-      <meta name="description" content="<%= config.description %>">
-    <% } %>
-
+    
     <%- open_graph({title: title}) %>
     
     <% if (theme.rss){ %>

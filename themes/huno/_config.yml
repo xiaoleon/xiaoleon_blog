@@ -18,3 +18,9 @@ awesome_toc: true
 
 # Enable githubRepoWidget
 github_repo_widget: false
+
+comment:
+    use: changyan
+    changyan_appid: 'cytoVRn2O'
+    changyan_conf: 'prod_8d1d2ca3d3e58602e938a09b0529415d'
+    changyan_thread_key_type: path
