@@ -6,7 +6,7 @@ var post = page;
 
   <header class="post-header">
     
-    <h1 class="post-title"><%= post.title %></h1>
+    <h2 class="post-title"><%= post.title %></h2>
 
     <% if (type == 'post') { %>
 
@@ -47,7 +47,10 @@ var post = page;
     <%- post.content %>
   </section>
 
-  <%- partial('comment') %>
+
+  <% if (is_post()) { %>
+    <%- partial('comment') %>
+  <% } %>
 
 
 </article>
