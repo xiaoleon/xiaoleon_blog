@@ -1,10 +1,9 @@
 ---
-title: H5(3) 表单介绍
+title: H5(3) 表单
 date: 2018-01-21 21:12:39
-tags: 
-- 读书笔记
-- 前端开发
+categories:
 - HTML5
+- 抄书笔记
 ---
 
 <!-- More -->
@@ -151,3 +150,8 @@ form元素与input元素还存在一个validity属性，该属性反悔了一个
 
 HTML5中，可以使用Javascript调用input元素的`setCustomValidity`方法来自定义错误信息。
 
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()
