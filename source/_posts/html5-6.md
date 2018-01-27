@@ -1,21 +1,21 @@
 ---
 title: H5(6) 拖放API
 date: 2018-01-21 21:37:05
-tags: 
-- 读书笔记
-- 前端开发
-- HTML5
+categories:
+- HTML5抄书笔记
+tags:
+- DataTransfer对象
 ---
 
 HTML5中，提供了直接支持拖放操作的API。虽然HTML5之前已经可以使用`mousedown`、`mousemove`、`mouseup`来实现拖放操作，但是这只支持浏览器内部的拖放，而在HTML5中，已经支持在浏览器与其他应用程序之间的数据互相拖动，同时也大大简化了有关于拖放方面的代码。
 
 <!-- More -->
 
-实现拖放的步骤:
+### 一、实现拖放的步骤
 
-* #### 1. 将想要拖放的对象元素的`draggable`属性设为`true`。这样才能将该元素进行拖放。另外，`img`元素与`a`元素（必须指定`href`）默认允许拖放。
+* 1) 将想要拖放的对象元素的`draggable`属性设为`true`。这样才能将该元素进行拖放。另外，`img`元素与`a`元素（必须指定`href`）默认允许拖放。
 
-* #### 2.编写与拖放有关的事件处理代码。
+* 2) 编写与拖放有关的事件处理代码
 
 | 事件 | 产生事件的元素 | 描述
 | - | - | -
@@ -27,11 +27,35 @@ HTML5中，提供了直接支持拖放操作的API。虽然HTML5之前已经可�
 | drop | 拖放的目标元素 | 有其他元素被拖放到了本元素中
 | dragend | 拖放的对象元素 | 拖放操作结束
 
-* #### 3.DataTransfer对象的属性和方法
+现在支持拖动处理的`MIME`的类型为以下几种：
 
-`DataTransfer`对象的属性和方法可以实现定制拖放图标，让它只支持特定拖放（譬如拷贝/移动/）等，甚至可以实现更复杂的拖放操作
+* `text/plain`：文本文字
 
-* #### 4.设定拖放时的视觉效果
+* `text/html`：HTML文字
+
+* `text/xml`：XML文字
+
+* `text/uri-list`：URL列表，每个URL为一行
+
+---
+
+### 二、DataTransfer对象的属性和方法
+
+`DataTransfer`对象的属性和方法可以实现定制拖放图标，让它只支持特定拖放（譬如拷贝/移动/）等，甚至可以实现更复杂的拖放操作。
+
+| 属性/方法 | 描述
+| - | -
+| `dropEffect`属性 | 表示拖放操作的视觉效果，允许对其进行值的设定。该效果必须在用`effectAllowed`属性指定的允许的视觉效果的范围内，允许指定的值为`none、copy、link、move`
+| `effectAllowed`属性 | 用来指定当元素被拖放时所允许的视觉效果，可以指定的值为`none、copy、copyLink、copyMove、link、linkMove、move、all、unitialize`
+| `types`属性 | 存入数据的种类，字符串的伪数组
+| `void clearData(DOMString format)`方法 | 清除`DataTransfer`对象中存放的数据，如果省略参数`format`，则清除全部数据
+| `void setData(DOMString format、DOMString data)` | 向`DataTransfer`对象内存入数据
+| `DOMString getData(DOMString format)` | 从`DataTransfer`对象中读数据
+| `void setDragImage(Element Image, long x, long y)` | 用`img`元素来设置拖放图标
+
+---
+
+### 三、设定拖放时的视觉效果
 
 `dropEffect`属性与`effectAllowed`属性结合起来可以设定拖放时的视觉效果。
 
@@ -39,10 +63,13 @@ HTML5中，提供了直接支持拖放操作的API。虽然HTML5之前已经可�
 
 dropEffect属性表示实际拖放时的视觉效果，一般在`ondragover`事件中指定，允许设定的值为`none`、`copy`、`link`、`move`。`dropEffect`属性所表示的实际视觉效果必须在`effectAllowed`属性所表示的允许的视觉效果范围内。
 
-> * 1) 如果`effectAllowed`属性设定为`none`，则不允许拖放元素
-> * 2) 如果`dropEffect`属性设定为`none`，则不允许被拖放到目标元素中
-> * 3) 如果`effectAllowed`属性设定为`all`或不设定，则`dropEffect`属性允许被设定为任何值，并且按指定的视觉效果进行显示
-> * 4) 如果`effectAllowed`属性设定为具体效果（不为`none`、`all`），`dropEffect`属性也设定了具体视觉效果，则两个具体效果值必须完全相等，否则不允许将被拖放元素拖放到目标元素中。
+* 1) 如果`effectAllowed`属性设定为`none`，则不允许拖放元素
+
+* 2) 如果`dropEffect`属性设定为`none`，则不允许被拖放到目标元素中
+
+* 3) 如果`effectAllowed`属性设定为`all`或不设定，则`dropEffect`属性允许被设定为任何值，并且按指定的视觉效果进行显示
+
+* 4) 如果`effectAllowed`属性设定为具体效果（不为`none`、`all`），`dropEffect`属性也设定了具体视觉效果，则两个具体效果值必须完全相等，否则不允许将被拖放元素拖放到目标元素中。
 
 ```js
 source.addEventListener('dragstart', function(ev) {
@@ -58,13 +85,15 @@ dest.addEventListener('dragover', function(ev) {
 }, false);
 ```
 
-* #### 5.自定义拖放图标
+---
+
+### 四、自定义拖放图标
 
 HTML5中允许自定义拖放图标——指的是在用鼠标拖动元素的过程中，位于鼠标指针下部的小图标。
 
 `DataTransfer`对象有一个`setDragImage`方法，该方法由三个参数，第一个参数`image`设定为拖放图标的图标元素，第二个参数x为拖放图标离鼠标指针的x轴方向的位移量，第三个参数y为拖放图标离鼠标指针的y轴方向的位移量。
 
-```javascript
+```js
 var dragIcon = document.createElement('img');
 dragIcon.src = 'http://twivatar.org/twitter/mini';
 source.addEventListener('dragstart', function(ev {
@@ -74,3 +103,9 @@ source.addEventListener('dragstart', function(ev {
     dt.setData("text/plain", "aaa");
 }), false);
 ```
+
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()

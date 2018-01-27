@@ -1,11 +1,14 @@
 ---
 title: H5(7) Audio && Video
 date: 2018-01-21 21:41:34
-tags: 
-- 读书笔记
-- 前端开发
-- HTML5
+categories:
+- HTML5抄书笔记
+tags:
+- Audio
+- Video
 ---
+
+本文介绍HTML5中新增的两个元素——`video`元素与`audio`元素，它们分别用来处理视频数据和音频数据。需要说明的是，本文中的“媒体”一词是对音频和视频的总称。
 
 <!-- More -->
 
@@ -41,7 +44,7 @@ tags:
 <video src="sample.mov" preload="auto"></video>
 ```
 
-#### 4. poster （video元素独有属性）
+#### 4. poster（video元素独有属性）
 
 当视频不可用时，可以使用该元素向用户展示一副替代用的图片。当视频不可用时，最好使用该属性，以免展示视频的区域内出现一片空白。
 
@@ -199,27 +202,32 @@ var support = videoElement.canPlayType(type);
 
 | 事件 | 描述
 | - | -
-| loadstart | 浏览器开始在网上寻找媒体数据
-| progress | 浏览器正在获取媒体数据
-| suspend | 浏览器暂停获取媒体数据，但是下载过程并没有正常结束
-| abort | 浏览器在下载完全部媒体数据之前中止获取媒体数据，但是并不是由错误引起的
-| error | 获取媒体数据过程中出错
-| emptied | video元素或audio元素所在的网络突然变为未初始化状态（可能原因：1. 载入媒体过程中突然发生一个致命错误；2. 在浏览器正在选择支持的播放格式时，又调用了load方法重新载入媒体）
-| stalled | 浏览器尝试获取媒体数据失败
-| play | 即将开始播放，当执行了play方法时触发，或数据下载后元素被设为autoplay属性
-| pause | 播放暂停，当执行了pause方法时触发
-| loadedmetadata | 浏览器获取完毕媒体的时间长和字节数
-| loadeddata | 浏览器已加载完毕当前播放位置的媒体数据，准备播放
-| waiting | 播放过程由于得不到下一帧而暂停播放（例如下一帧尚未加载完毕），但很快就能够得到下一帧
-| playing | 正在播放
-| canplay | 浏览器能够播放媒体，但估计以当前播放速率不能直接将媒体播放完毕，播放期间需要缓冲
-| canplaythrough | 浏览器能够播放媒体，而且以当前播放速率能够将媒体播放完毕，不再需要进行缓冲
-| seeking | seeking属性变为true，浏览器正在请求数据
-| seeked | seeking属性变为false，浏览器停止请求数据
-| timeupdate | 当前播放位置被改变，可能是播放过程中的自然改变，也可能使被认为的改变，或由于播放不能连续而发生的跳变
-| ended | 播放结束后停止播放
-| ratechange | defaultplaybackRate属性或playbackRate属性被改变
-| durationchange | 播放时长被改变
-| volumnchange | volumn属性被改变或muted属性被改变
+| `loadstart` | 浏览器开始在网上寻找媒体数据
+| `progress` | 浏览器正在获取媒体数据
+| `suspend` | 浏览器暂停获取媒体数据，但是下载过程并没有正常结束
+| `abort` | 浏览器在下载完全部媒体数据之前中止获取媒体数据，但是并不是由错误引起的
+| `error` | 获取媒体数据过程中出错
+| `emptied` | video元素或audio元素所在的网络突然变为未初始化状态（可能原因：1. 载入媒体过程中突然发生一个致命错误；2. 在浏览器正在选择支持的播放格式时，又调用了`load`方法重新载入媒体）
+| `stalled` | 浏览器尝试获取媒体数据失败
+| `play` | 即将开始播放，当执行了`play`方法时触发，或数据下载后元素被设为`autoplay`属性
+| `pause` | 播放暂停，当执行了`pause`方法时触发
+| `loadedmetadata` | 浏览器获取完毕媒体的时间长和字节数
+| `loadeddata` | 浏览器已加载完毕当前播放位置的媒体数据，准备播放
+| `waiting` | 播放过程由于得不到下一帧而暂停播放（例如下一帧尚未加载完毕），但很快就能够得到下一帧
+| `playing` | 正在播放
+| `canplay` | 浏览器能够播放媒体，但估计以当前播放速率不能直接将媒体播放完毕，播放期间需要缓冲
+| `canplaythrough` | 浏览器能够播放媒体，而且以当前播放速率能够将媒体播放完毕，不再需要进行缓冲
+| `seeking` | `seeking`属性变为true，浏览器正在请求数据
+| `seeked` | `seeking`属性变为false，浏览器停止请求数据
+| `timeupdate` | 当前播放位置被改变，可能是播放过程中的自然改变，也可能使被认为的改变，或由于播放不能连续而发生的跳变
+| `ended` | 播放结束后停止播放
+| `ratechange` | `defaultplaybackRate`属性或`playbackRate`属性被改变
+| `durationchange` | 播放时长被改变
+| `volumnchange` | `volumn`属性被改变或`muted`属性被改变
 
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()
 

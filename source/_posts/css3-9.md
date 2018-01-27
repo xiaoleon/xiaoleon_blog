@@ -1,10 +1,11 @@
 ---
 title: CSS3(9) Media Queries相关样式
 date: 2018-01-22 22:02:35
+categories:
+- CSS3抄书笔记
 tags:
-- 读书笔记
-- 前端开发
-- CSS3
+- 响应式布局
+- 媒体查询
 ---
 
 在css3的众多模块中，有一个与各种媒体相关的重要模块——`Media Queries`，该模块中允许添加媒体查询表达式，用以指定媒体类型，然后根据媒体类型来选择应该使用的样式。换句话说，允许我们在不改变内容的情况下在样式中选择一种页面的布局以精确地适应不同的设备，从而改善用户体验。
@@ -90,3 +91,9 @@ css3中的`Media Queries`模块中也支持对外部样式表的引用，使用�
 
 <link rel="stylesheet" type="text/css" media="screen and (min-width: 1000px)" href="style.css">
 ```
+
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()

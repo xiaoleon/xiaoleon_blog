@@ -1,10 +1,11 @@
 ---
 title: CSS3(4) 盒相关样式
 date: 2018-01-22 21:44:04
+categories:
+- CSS3抄书笔记
 tags:
-- 读书笔记
-- 前端开发
-- CSS3
+- 盒模型
+- box-sizing
 ---
 
 在css中，使用`display`属性来定义盒的类型。总体上来说，css的盒分为`block`类型与`inline`类型。
@@ -54,29 +55,29 @@ div {
 
 ---
 
-### 五、对于盒中容纳不下的内容的显示
+### 五、超出盒容纳的内容
 
 如果在样式中指定了盒的宽度与高度，就有可能出现某些内容在盒中容纳不下的情况，可以使用`overflow`属性来指定如何显示这些内容。
 
-#### 1. overflow: hidden
+* overflow: hidden
 
-超出容纳范围的文字被隐藏
+    超出容纳范围的文字被隐藏
 
-#### 2. overflow: scroll
+* overflow: scroll
 
-元素中出现固定的水平滚动条与垂直滚动条
+    元素中出现固定的水平滚动条与垂直滚动条
 
-#### 3. overflow: auto
+* overflow: auto
 
-文字超出div元素的容纳范围时，根据需要出现水平滚动条或垂直滚动条
+    文字超出div元素的容纳范围时，根据需要出现水平滚动条或垂直滚动条
 
-#### 4. overflow: visible
+* overflow: visible
 
-显示效果与不使用overflow属性时一样
+    显示效果与不使用overflow属性时一样
 
-#### 5. text-overflow
+* text-overflow
 
-当通过把`overflow`属性设定为`ellipsis`，将盒中容纳不下的内容隐藏起来时，如果使用`text-overflow`属性，可以在盒的末尾显示一个代表省略的符号`“...”`。但是，`text-overflow`属性只在当盒中的内容在水平方向上超出盒的容纳范围时有效。通过将`white-space`属性设定为`nowrap`，使得盒右端的内容不能换行显示。
+    当通过把`overflow`属性设定为`ellipsis`，将盒中容纳不下的内容隐藏起来时，如果使用`text-overflow`属性，可以在盒的末尾显示一个代表省略的符号`“...”`。但是，`text-overflow`属性只在当盒中的内容在水平方向上超出盒的容纳范围时有效。通过将`white-space`属性设定为`nowrap`，使得盒右端的内容不能换行显示。
 
 ```css
 div {
@@ -87,6 +88,8 @@ div {
     -o-text-overflow: ellipsis;
 }
 ```
+
+---
 
 ### 六、对盒使用阴影
 
@@ -100,7 +103,7 @@ box-shadow: length length length color;
 
 前面三个`length`分别指阴影离开文字的 **横向距离**、**纵向距离**、**模糊半径**，color指阴影的 **颜色**
 
-#### 1. 对第一个文字或第一行使用阴影
+**对第一个文字或第一行使用阴影**
 
 可以使用`first-letter`选择器或`first-line`选择器来只让第一个文字或第一行具有阴影效果
 
@@ -115,15 +118,17 @@ div:first-line {
 }
 ```
 
+---
+
 ### 七、盒的宽度和高度
 
 在css3中，使用`box-sizing`属性来指定针对元素的宽度和高度的计算方法，是否包含元素内部的补白区域，以及边框的宽度和高度。
 
-#### 1. box-sizing: content-box
+#### 1. content-box
 
 元素的宽度和高度不包括内容补白区域，以及边框的宽度和高度
 
-#### 2. box-sizing: border-box
+#### 2. border-box
 
 元素的宽度和高度包括内部补白区域，以及边框的宽度和高度
 
@@ -131,3 +136,8 @@ div:first-line {
 
 使用`box-sizing`属性的目的是控制元素的总宽度，如果不使用该属性，样式中默认使用的是`content-box`属性值，它只对内容的宽度做了一个指定，却没有对元素的总宽度进行指定。有些场合下利用`border-box`属性值会使得页面布局更加方便。
 
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()

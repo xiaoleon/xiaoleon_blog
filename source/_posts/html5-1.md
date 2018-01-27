@@ -2,8 +2,7 @@
 title: H5(1) 概述
 date: 2018-01-21 20:51:34
 categories:
-- HTML5
-- 抄书笔记
+- HTML5抄书笔记
 tags:
 - HTML5意义
 - HTML5变化

@@ -1,19 +1,20 @@
 ---
 title: CSS3(7) 动画
 date: 2018-01-22 21:56:19
+categories:
+- CSS3抄书笔记
 tags:
-- 读书笔记
-- 前端开发
-- CSS3
+- Transitions
+- Animations
 ---
 
 css3中，如果使用动画功能，可以使页面上的文字或画像具有动画效果，可以使背景色从一种颜色平滑过渡到另一种颜色。
 
+<!-- More -->
+
 css3中的动画功能分为`Transitions`功能与`Animations`功能，这两种功能都可以通过改变css的属性值来产生动画效果。
 
 到目前为止，`Transitions`功能支持从一个属性值平滑过渡到另一个属性值，`Animations`功能支持通过关键帧的指定来在页面上产生更复杂的动画效果。
-
-<!-- More -->
 
 ### 一、Transitions功能
 
@@ -44,7 +45,7 @@ div:hover {
 
 css3中，还有另外一种使用`Transitions`功能的方法，就是将`transitions`属性中的三个参数改写成`transition-property`、`transition-duration`、`transition-timing-function`三个属性，这三个属性的含义与属性值的制定方法与`transitions`属性中的三个参数的含义及指定方法完全相同。
 
-#### 1. 使用Transitions功能同时平滑过渡多个属性值
+**使用Transitions功能同时平滑过渡多个属性值**
 
 可以使用`Transitions`功能同时对多个属性值进行平滑过渡。
 
@@ -114,9 +115,9 @@ div:hover {
 
 * 结束帧：100%
 
-#### 1. 实现动画的方法
+**实现动画的方法**
 
-前面的使用示例中，我们只使用了一种实现动画的方法——linear。linear的含义是在动画从开始到结束时使用同样的速度进行各种属性值的改变，在一个动画中不改变各种属性值的改变速度。
+前面的使用示例中，我们只使用了一种实现动画的方法——`linear`。`linear`的含义是在动画从开始到结束时使用同样的速度进行各种属性值的改变，在一个动画中不改变各种属性值的改变速度。
 
 | 方法 | 属性值的变化速度
 | - | -
@@ -146,3 +147,9 @@ body {
     -webkit-animation-iteration-count: 1;
 }
 ```
+
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()

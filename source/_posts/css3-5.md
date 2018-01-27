@@ -1,11 +1,16 @@
 ---
 title: CSS3(5) 背景边框相关样式
 date: 2018-01-22 21:49:17
+categories:
+- CSS3抄书笔记
 tags:
-- 读书笔记
-- 前端开发
-- CSS3
+- background样式
+- border样式
 ---
+
+本文主要介绍CSS3中的背景和边框相关的一些样式，其中包括与背景相关的几个属性，如何在一个元素的背景中使用多个图像文件；如何绘制圆角边框；如何给元素添加图像边框。
+
+<!-- More -->
 
 在css3中，追加了一些与背景相关的属性，如下表所示
 
@@ -16,23 +21,21 @@ tags:
 | background-size | 指定背景中图像的尺寸
 | background-break | 指定内联元素的背景图片进行平铺时的循环方式
 
- <!-- More -->
-
 ### 一、指定背景的显示范围
 
 在HTML页面中，一个具有背景的元素通常由元素的内容、内部补白（`padding`）、边框、外部补白（`margin`）构成。
 
 元素背景的显示范围在css2、css2.1、css3中并不相同：
 
-1. css2中背景的显示范围是指内部补白之内的范围，不包括边框
+* css2中背景的显示范围是指内部补白之内的范围，不包括边框
 
-2. css2.1至css3中，背景的显示范围是指包括边框在内的范围
+* css2.1至css3中，背景的显示范围是指包括边框在内的范围
 
-3. css3中，可以使用`background-clip`来修改背景的显示范围，如果将`background-clip`设定为`border-box`，则背景范围包括边框区域，如果设定为`padding-box`或`content-box`，则不包括边框区域。
+* css3中，可以使用`background-clip`来修改背景的显示范围，如果将`background-clip`设定为`border-box`，则背景范围包括边框区域，如果设定为`padding-box`或`content-box`，则不包括边框区域
 
 ---
 
-### 二、指定绘制背景图像的绘制起点
+### 二、指定背景的绘制起点
 
 在绘制背景图像时，默认是从内部补白（`padding`）区域的左上角开始，但是可以利用`background-origin`属性来指定绘制时从边框的左上角开始，或者从内容的左上角开始。
 
@@ -54,7 +57,7 @@ background-size: 40px 20px;
 
 ---
 
-### 四、指定内联元素背景图片进行平铺时的循环方式
+### 四、指定内联元素背景图片平铺循环方式
 
 在css3中，可以使用`background-break`属性来指定平铺内联元素背景图像时的循环方式，可以指定`bounding-box`、`each-box`、`continuous`这三种循环方式。
 
@@ -78,10 +81,8 @@ div {
 
 允许多重制定并配合着多个图像文件一起利用的属性有如下几个：
 
-```
-background-image  background-repeat  background-position  
-background-clip  background-origin  background-size
-```
+`background-image, background-repeat, background-position` 
+`background-clip, background-origin, background-size`
 
 ---
 
@@ -113,7 +114,7 @@ div {
 
 `border-image`属性值中至少必须指定五个参数，其中第一个参数为边框所使用的图片文件的路径，后面四个参数表示当浏览器自动把边框所使用到的图像进行分隔时的上边距、右边距、下边距及左边距。
 
-#### 1. 使用border-image属性来指定边框宽度
+#### 1. 指定边框宽度
 
 在css3中，除了可以使用`border`属性或`border-width`属性来指定边框的宽度外，使用`border-image`属性同样可以指定边框的宽度。
 
@@ -151,3 +152,9 @@ border-image: url(文件路径) A B C D / border-width topbottom leftright
 * `repeat+stretch`：将上下两条边中的图像的显示方式指定为平铺显示，左右两条边中的图像的显示方式指定为拉伸显示，或者上下两条边中的图像的显示方式指定为拉伸显示，左右两条边中的图像的显示方式指定为平铺显示。
 
 * `round`：与`repeat`类似，都是将图像进行平铺显示，区别在于如果最后显示的衣服图像不能被完全显示，且能够现实的部分不到图像的一半，就不显示最后的图像，然后扩大前面的图像，使显示区域正好完整平铺全部图像；如果能够显示的部分超过图像的一半，就显示最后的图像，但是将全部显示的图像缩小，使显示区域正好完整平铺全部图像。
+
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()

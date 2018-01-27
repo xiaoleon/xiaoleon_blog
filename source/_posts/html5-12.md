@@ -1,10 +1,10 @@
 ---
-title: H5(12) 使用Web Workers处理线程
+title: H5(12) Web Workers
 date: 2018-01-22 21:19:17
+categories:
+- HTML5抄书笔记
 tags:
-- 读书笔记
-- 前端开发
-- HTML5
+- Web Workers
 ---
 
 `Web Workers`是HTML5中新增的，用来在Web应用程序中实现后台处理的一项技术。
@@ -192,3 +192,9 @@ importScripts('script1.js', 'scripts\script2.js', 'script\script3.js');
 #### 13. WebSockets
 
 可以使用`WebSockets API`来向服务器发送和接收消息
+
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()

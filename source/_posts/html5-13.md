@@ -1,10 +1,10 @@
 ---
 title: H5(13) Geolocation
 date: 2018-01-22 21:23:54
+categories:
+- HTML5抄书笔记
 tags:
-- 读书笔记
-- 前端开发
-- HTML5
+- Geolocation
 ---
 
 在HTML5中，为`window.navigator`对象新增了一个`geolocation`属性，可以使用`Geolocation API`来对该属性进行访问。
@@ -35,7 +35,7 @@ navigator.geolocation.getCurrentPosition(function(position) {
 
 `onError`回调函数中，用到了一个`error`对象，该对象具有以下两个属性：
 
-1. `code`属性。`code`属性为以下三个值其中之一：
+* `code`属性。`code`属性为以下三个值其中之一：
 
     * 用户拒绝了位置服务（数字值为1）
 
@@ -43,7 +43,7 @@ navigator.geolocation.getCurrentPosition(function(position) {
 
     * 获取信息超时错误（数字值为3）
 
-2. `message`属性。
+* `message`属性。
 
     `message`属性为一个字符串，在该字符串中包含了错误信息。
 
@@ -68,15 +68,15 @@ navigator.geolocation.getCurrentPosition(
 
 * enableHighAccuracy
 
-是否要求高精度的地理位置信息，这个参数在很多设备上设置了都没用，因为使用在设备上时要结合设备电量、具体地理情况来综合考虑
+    是否要求高精度的地理位置信息，这个参数在很多设备上设置了都没用，因为使用在设备上时要结合设备电量、具体地理情况来综合考虑
 
 * timeout
 
-对地理位置信息的获取操作做一个超时限制（单位为毫秒）。如果在改时间内未获取到地理位置信息，则返回错误
+    对地理位置信息的获取操作做一个超时限制（单位为毫秒）。如果在改时间内未获取到地理位置信息，则返回错误
 
 * maximumAge
 
-对地理位置信息进行缓存的有效时间（单位为毫秒）。如果该值指定为0，则无条件重新获取新的地理位置信息
+    对地理位置信息进行缓存的有效时间（单位为毫秒）。如果该值指定为0，则无条件重新获取新的地理位置信息
 
 ```javascript
 navigator.geolocation.getCurrentPosition(
@@ -113,34 +113,39 @@ void clearWatch(watchId)
 
 * latitude
 
-当前地理位置的纬度
+    当前地理位置的纬度
 
 * longitude
 
-当前地理位置的精度
+    当前地理位置的精度
 
 * altitude
 
-当前位置的海拔高度
+    当前位置的海拔高度
 
 * accuracy
 
-获取到的纬度或经度的精度（单位为米）
+    获取到的纬度或经度的精度（单位为米）
 
 * altitudeAccurancy
 
-获取到的海拔高度的精度（单位为米）
+    获取到的海拔高度的精度（单位为米）
 
 * heading
 
-设备的前进方向，以面朝正北方向的顺时针旋转角度来表示
+    设备的前进方向，以面朝正北方向的顺时针旋转角度来表示
 
 * speed
 
-设备的前进速度（单位为米/秒）
+    设备的前进速度（单位为米/秒）
 
 * timestamp
 
-获取地理位置信息时的时间
+    获取地理位置信息时的时间
 
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()
 

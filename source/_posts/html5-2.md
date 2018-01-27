@@ -2,8 +2,7 @@
 title: H5(2) 结构
 date: 2018-01-21 21:03:34
 categories:
-- HTML5
-- 抄书笔记
+- HTML5抄书笔记
 tags:
 - 主体结构
 - 显式编排

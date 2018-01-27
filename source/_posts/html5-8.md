@@ -1,10 +1,11 @@
 ---
 title: H5(8) Web Storage与本地数据库
 date: 2018-01-21 21:53:48
-tags: 
-- 读书笔记
-- 前端开发
-- HTML5
+categories:
+- HTML5抄书笔记
+tags:
+- Web Storage
+- 本地数据库
 ---
 
 `Web Storage`存储机制是对HTML4中`cookies`存储机制的一个改善。由于`cookies`存储机制有很多缺点，HTML5中不再使用它，转而使用改良后的`Web Storage`存储机制。
@@ -27,11 +28,11 @@ tags:
 
 * sessionStorage
 
-将数据保存在`session`对象中。所谓`session`，是指用户在浏览某个网站时，从进入网站到浏览器关闭所经过的这段时间，也就是用户浏览这个网站所花费的时间。`session`对象可以用来保存在这段时间内所要求保存的任何数据
+    将数据保存在`session`对象中。所谓`session`，是指用户在浏览某个网站时，从进入网站到浏览器关闭所经过的这段时间，也就是用户浏览这个网站所花费的时间。`session`对象可以用来保存在这段时间内所要求保存的任何数据
 
 * localStorage
 
-将数据保存在客户端本地的硬件设备中，即使浏览器被关闭了，该数据仍然存在，下次打开浏览器访问网站时仍然可以继续使用
+    将数据保存在客户端本地的硬件设备中，即使浏览器被关闭了，该数据仍然存在，下次打开浏览器访问网站时仍然可以继续使用
 
 两者区别在于，`sessionStorage`为临时保存，而`localStorage`为永久保存。
 
@@ -39,15 +40,15 @@ tags:
 
 * sessionStorage
 
-保存数据：`sessionStorage.setItem(key, value)`
+    保存数据：`sessionStorage.setItem(key, value)`
 
-读取数据：`var value = sessionStorage.getItem(key)`
+    读取数据：`var value = sessionStorage.getItem(key)`
 
 * localStorage
 
-保存数据：`localStorage.setItem(key, value)`
+    保存数据：`localStorage.setItem(key, value)`
 
-读取数据：`var value = localStorage.getItem(key)`
+    读取数据：`var value = localStorage.getItem(key)`
 
 ---
 
@@ -107,3 +108,8 @@ function errorHandler(transaction, errmsg) {
 }
 ```
 
+---
+
+### 参考文献
+
+1. [《HTML5与CSS3权威指南》]()
