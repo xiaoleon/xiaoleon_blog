@@ -1,6 +1,5 @@
 /*@import 'http://fonts.googleapis.com/css?family=Raleway:400,700|Roboto+Slab:300,400)';*/
 
-
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
@@ -96,7 +95,6 @@ video {
   vertical-align: baseline;
 }
 
-
 /* HTML5 display-role reset for older browsers */
 
 article,
@@ -153,7 +151,6 @@ body:after {
 body:after {
   clear: both;
 }
-
 
 /*
  * Foundation Icons v 3.0
@@ -1529,9 +1526,9 @@ code {
 
 .content-wrapper {
   z-index: 800;
-  width: 68%;
+  width: 75%;
   max-width: 960px;
-  margin-left: 32%;
+  margin-left: 25%;
 }
 
 .content-wrapper__inner {
@@ -1666,8 +1663,8 @@ hr {
 }
 
 .panel-cover--collapsed {
-  width: 32%;
-  max-width: 430px;
+  width: 25%;
+  max-width: 400px;
 }
 
 .panel-cover--overlay {
@@ -1699,7 +1696,7 @@ hr {
 }
 
 .panel-cover__divider--secondary {
-  width: 15%;
+  width: 30%;
 }
 
 .panel-main {
@@ -1713,7 +1710,7 @@ hr {
   vertical-align: middle;
   position: relative;
   z-index: 800;
-  padding: 0 60px;
+  padding: 0 20px;
 }
 
 .panel-main__content {
@@ -2243,7 +2240,6 @@ input[type="tel"]:-ms-input-placeholder {
     margin-bottom: .4em;
   }
 }
-
 
 /* add */
 
