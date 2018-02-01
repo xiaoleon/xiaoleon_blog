@@ -1542,6 +1542,7 @@ code {
   border-top: 2px solid #dddddd;
   font-size: .7em;
   color: #b3b3b3;
+  line-height: 1.5;
 }
 
 .footer__copyright {
@@ -2236,7 +2237,7 @@ input[type="tel"]:-ms-input-placeholder {
   }
   .btn,
   .navigation__item a {
-    display: block;
+    /* display: block; */
     margin-bottom: .4em;
   }
 }
