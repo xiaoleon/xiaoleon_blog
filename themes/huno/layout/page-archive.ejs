@@ -6,7 +6,7 @@ var post = page;
 
   <header class="post-header">
     
-    <h1 class="post-title"><%= post.title %></h1>
+    <h2 class="post-title"><%= post.title %></h2>
 
     <section id="post-content" class="article-content post">
         <%- post.content %>
@@ -19,16 +19,23 @@ var post = page;
 
 <div class="archive-meta">
 
+<% if (site.posts.length){ %>
+    <h3><%= __('archives') %></h3>
+    <div class="archiveslist">
+      <%- list_archives() %>
+    </div>
+<% } %>
+
 <% if (site.categories.length){ %>
     <h3><%= __('categories') %></h3>
 
-    <div class="categorieslist">
-        <% site.categories.sort('name').each(function(item){ %>
+    <ul class="categorieslist">
+        <% site.categories.sort('posts.length','desc').each(function(item){ %>
           <% if(item.posts.length){ %>
-            <span><a href="<%- config.root %><%- item.path %>" title="<%= item.name %>"><%= item.name %><sup><%= item.posts.length %></sup></a></span>
+            <li><a href="<%- config.root %><%- item.path %>" title="<%= item.name %>"><%= item.name %><sup>(<%= item.posts.length %>)</sup></a></li>
           <% } %>
         <% }); %>
-     </div>
+     </ul>
 <% } %>
 
 <% if (site.tags.length){ %>
@@ -36,16 +43,9 @@ var post = page;
     <div class="tagslist">
         <% site.tags.sort('posts.length','desc').limit(20).each(function(item){ %>
             <% if(item.posts.length){ %>
-                <span><a href="<%- config.root %><%- item.path %>" title="<%= item.name %>"><%= item.name %><sup><%= item.posts.length %></sup></a></span>
+                <span><a href="<%- config.root %><%- item.path %>" title="<%= item.name %>"><%= item.name %><sup>(<%= item.posts.length %>)</sup></a></span>
             <% } %>
         <% }); %>
-    </div>
-<% } %>
-
-<% if (site.posts.length){ %>
-    <h3><%= __('archives') %></h3>
-    <div class="archiveslist">
-      <%- list_archives() %>
     </div>
 <% } %>
 
