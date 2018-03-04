@@ -51,7 +51,9 @@ npm start
 
 接下来，我们会用React开发一个简单的功能。
 
-#### 2. 增加一个新的React组件
+---
+
+### 二、增加一个新的React组件
 
 React的首要思想是通过组件（Component）来开发应用。所谓组件，简单说，指的是能完成某个特定功能的独立的、可重用的代码。
 
@@ -166,7 +168,7 @@ class ClickCounter extends Component { }
 
 也就是说，在使用JSX的代码文件中，即使代码中并没有直接使用React，也一定要导入React，这是因为JSX最终会被转译成依赖于React的表达式。
 
-##### 2.1 JSX
+#### 1. JSX
 
 所谓JSX，是JavaScript的语法扩展（eXtension），让我们在JavaScript中可以编写像HTML一样的代码。在ClickCounter.js的render函数中，就出现了类似这样的HTML代码，在index.js中，ReactDOM.render的第一个参数`<App />`也是一段JSX代码。
 
@@ -180,7 +182,7 @@ React判断一个元素是HTML元素还是React元素的原则就是看第一个
 
 这就带来一个问题，既然长期以来一直不提倡在HTML中使用onclick，为什么在React的JSX中我们却要使用onClick这样的方式来添加事件处理函数呢？
 
-##### 2.2 JSX是进步还是倒退
+#### 2. JSX是进步还是倒退
 
 在React出现之初，很多人对React这样的设计非常反感，因为React把类似HTML的标记语言和JavaScript混在一起了，但是，随着时间的推移，业界逐渐认可了这种方式，因为大家都发现，以前用HTML来代表内容，CSS代笔样式，Javascript来定义交互行为，这三种语言分在三种不同的文件里面，实际上是把不同技术分开管理了，而不是逻辑上的“分而治之”。
 
@@ -228,7 +230,9 @@ render() {
 
 这样，React的组件可以把JavaScript、HTML和CSS的功能写在一个文件中，实现真正的组件封装。
 
-#### 3. 分解React应用
+---
+
+### 三、分解React应用
 
 前面我们提到过，React应用实际上依赖于一个很大很复杂的技术栈，我们使用create-react-app避免在一开始就费太多精力配置技术栈，不过现在是时候了解一下这个技术栈了。
 
@@ -291,23 +295,123 @@ npm run eject
 
 ---
 
-### 二、
+### 四、React的工作方式
 
-<!-- Todo -->
+在继续深入学习React的其他知识之前，我们先就这个简单的ClickCounter组件思考一下React的工作方式，要了解一样东西的特点，最好的方法当然是拿这个东西和另一样东西做比较。我们就拿React和jQuery来比较。
 
+#### 1. jQuery如何工作
+
+假设我们用jQuery来实现ClickCounter的功能，该怎么做呢？首先，我们要产生一个网页的HTML，写一个index.html文件如下所示：
+
+```html
+<!doctype html>
+<html>
+  <body>
+    <div>
+      <button id="ClickMe">Click Me</button>
+      <div>
+        Click Count: <span id="clickCount">0</span>
+      </div>
+    </div>
+    <script src="./jquery.min.js"></script>
+    <script src="./clickCounter.js"></script>
+  </body>
+</html>
+```
+
+实际产品中，产生这样的HTML可以用PHP、Java、Ruby或者任何一种服务器端语言和框架来做，也可以在浏览器中用Mustache、Hogan这样的模板来产生，这里我们只是把问题简化，直接书写HTML。
+
+上面的HTML只是展示样式，并没有任何交互功能，现在我们用jQuery来实现交互功能，和jQuery的传统一样，我们把JavaScript写在一个独立的文件clickCounter.js中。
+
+```js
+$(function() {
+  $('#clickMe').click(function() {
+    var clickCounter = $('#clickCount');
+    var count = parseInt(clickCounter.text(), 10);
+    clickCounter.text(count + 1);
+  })
+})
+```
+
+用浏览器打开上面创造的index.html，可以看到实际效果和我们写的React应用一模一样，但是对比这两段程序可以看出差异。
+
+在jQuery解决方案中，首先根据CSS规则找到id为clickCount的按钮，挂上一个匿名事件处理函数，在事件处理函数中，选中那个需要被修改的DOM元素，读取其中的文本值，加以修改，然后修改这个DOM元素。
+
+选中一些DOM元素，然后对这些元素做一些操作，这是一种最容易理解的开发模式。jQuery的发明人John Resig就是发现了网页应用开发者的这种编程模式，才创造出了jQuery，其一问世就得到普遍认可，因为这种模式直观易懂。但是，对于庞大的项目，这种模式会造成代码结构复杂，难以维护，每个jQuery的使用者都会有这种体会。
+
+#### 2. React的理念
+
+与jQuery不同，用React开发应用是另一种体验，我们回顾一下，用React开发的ClickCounter组件好像没有像jQuery那样做“选中一些DOM元素然后做一些事情”的动作。
+
+打一个比方，React是一个聪明的建筑工人，而jQuery是一个比较傻的建筑工人，开发者你就是一个建筑的设计师，如果是jQuery这个建筑工人为你工作，你不得不事无巨细地告诉jQuery“如何去做”，要告诉他这面墙要拆掉重建，那面墙上要新开一个窗户。反之，如果是React这个建筑工人为你工作，你所要做的就是告诉这个工人“我想要什么样子”，只要把图纸递给React这个工人，他就会替你搞定一切，当然他不会把整个建筑拆掉重建，而是很聪明地把这次的图纸和上次的图纸做一个对比，发现不同之处，然后只去做适当的修改就完成任务了。
+
+显而易见，React的工作方式把开发者从繁琐的操作中解放出来，开发者只需要着重“我想要显示什么”，而不用操心“怎样去做”。
+
+这种新的思维方式，对于一个简单的例子也要编写不少代码，感觉像是用高射炮打蚊子，但是对于一个大型的项目，这种方式编写的代码会更容易管理，因为整个React应用要做的就是渲染，开发者关注的是渲染成什么样子，而不用关心如何实现增量渲染。
+
+React的理念，归结为一个公式，就像下面这样：
+
+```js
+UI = render(data)
+```
+
+让我们来看看这个公示表达的含义，用户看到的界面（UI），应该是一个函数（在这里叫render）的执行结果，只接受数据（data）作为参数。这个函数是一个纯函数，所谓纯函数，指的是没有任何副作用，输出完全依赖于输入的函数，两次函数调用如果输入相同，得到的结果也绝对相同。如此一来，最终的用户界面，在render函数确定的情况下完全取决于输入数据。
+
+对于开发者来说，重要的是区分开哪些属于data，哪些属于render，想要更新用户界面，要做的就是更新data，用户界面自然会做出响应，所以React实践的也是“响应式编程”（Reactive Programming）的思想，这也就是React为什么叫做React的原因。
+
+#### 3. Virtual DOM
+
+既然React应用就是通过重复渲染实现用户交互，我们可能会有一个疑虑：这样的重复渲染会不会效率太低了呢？毕竟，在jQuery的实现方式中，我们可以清楚地看到每次只有需要变化的那一个DOM元素被修改了；可是，在React的实现方式中，看起来每次render函数被调用，都要把整个组件重新绘制一次，这样看起来有点浪费。
+
+事实并不是这样，React利用Virtual DOM，让每次渲染都重新渲染最少的DOM元素。
+
+要了解Virtual DOM，就要先了解DOM，DOM是结构化文本的抽象表达形式，特定于Web环境中，这个结构化文本就是HTML文本，HTML中的每个元素都对应DOM中的某个节点，这样，因为HTML元素的逐级包含关系，DOM节点自然就构成了一个树形结构，称为DOM树。
+
+浏览器为了渲染HTML格式的网页，会先将HTML文本解析以构建DOM树，然后根据DOM树渲染出用户看到的界面，当要改变界面内容的时候，就去改变DOM树上的节点。
+
+Web前端开发关于性能优化有一个原则：尽量减少DOM操作。虽然DOM操作也只是一些简单的JavaScript语句，但是DOM操作会引起浏览器对网页进行重新布局，重新绘制，这就是一个比JavaScript语句执行慢很多的过程。
+
+如果使用mustache或者hogan这样的模板工具，那就是生成HTML字符串塞到网页中，浏览器又要做一次解析产生新的DOM节点，然后替换DOM树上对应的子树部分，这个过程肯定效率不高。虽然JSX看起来很像是一个模板，但是最终会被Babel解析为一条条创建React组件或者HTML元素的语句，神奇之处在于，React并不是通过这些语句直接构建DOM树，而是首先构建Virtual DOM。
+
+既然DOM树是对HTML的抽象，那Virtual DOM就是对DOM树的抽象。Virtual DOM不会触及浏览器的部分，只是存在于JavaScript空间的树形结构，每次自上而下渲染React组件时，会对比这一次产生的Virtual DOM和上一次渲染的Virtual DOM，对比就会发现差别，然后修改真正的DOM树时就只需要触及差别中的部分就行。
+
+以ClickCounter为例，一开始点击计数为0，用户点击按钮让点击计数变成1，这一次重新渲染，React通过Virtual DOM的对比发现其实只是id为clickCounter的span元素中内容从0变成了1而已：
+
+```html
+<span id="clickCounter">{this.state.count}</span>
+```
+
+React发现这次渲染要做的事情只是更换span元素的内容而已，其他DOM元素都不需要触及，于是执行类似下面的语句，就完成了任务：
+
+```js
+document.getElementById('clickCounter').innerHTML = "1";
+```
+
+#### 4. React工作方式的优点
+
+毫无疑问，jQuery的方式直观易懂，对于初学者十分适用，但是当项目逐渐变得庞大时，用jQuery写出的代码往往互相纠缠，形成类似下图的状况，难以维护。
+
+![jQuery方式造成的纠缠代码结构](/images/react-1/5.png)
+
+使用React的方式，就可以避免构建这样复杂的程序结构，无论何种事件，引发的都是React组件的重新渲染，至于如何只修改必要的DOM部分，则完全交给React去操作，开发者并不需要关心，程序的流程简化为如下方式。
+
+![React的程序流程](/images/react-1/6.png)
+
+React利用函数式编程的思维来解决用户界面渲染的问题，最大的优势是开发者的效率会大大提高，开发出来的代码可维护性和可阅读性也大大增强。
+
+React等于强制所有组件都按照这种由数据驱动渲染的模式来工作，无论应用的规模多大，都能让程序处于可控范围内。
 
 ---
 
-### 三、
+### 五、本文小结
 
-<!-- Todo -->
+在本文中，我们用create-react-app创造了一个简单的React应用，在一开始，我们就按照组件的思想来开发应用，React的主要理念之一就是基于组件来开发应用。
 
+通过和同样功能的jQuery实现方式对比，我们了解了React的工作方式，React利用声明式的语法，让开发者专注于描述用户界面“显示成什么样子”，而不是重复思考“如何去显示”，这样可以大大提高开发效率，也让代码更加容易管理。
+
+虽然React是通过重复渲染来实现动态更新效果，但是借助Virtual DOM技术，实际上这个过程并不牵涉太多的DOM操作，所以渲染效率很高。
 
 ---
-
-### 四、
-
-<!-- Todo -->
 
 ### 参考文献
 
