@@ -369,7 +369,103 @@ enter componentDidMount Third
 
 可以清楚的看到，虽然componentWillMount都是紧贴着自己组件的render函数之前被调用，componentDidMount可不是紧跟着render函数被调用，当所有三个组建的render函数都被调用之后，三个组件的componentDidMount才连在一起被调用。
 
+之所以会有上面的现象，是因为render函数本身并不往DOM树上渲染或者装载内容，它只是返回一个JSX表示的对象，然后由React库来根据返回对象决定如何渲染。而React库肯定是要把所有的组件返回的结果综合起来，才能知道如何产生对应的DOM修改。所以，只有React库调用三个Counter组件的render函数之后，才有可能完成装载，这时候才会依次调用各个组件的componentDidMount函数作为装载过程的收尾。
 
+componentWillMount和componentDidMount这对兄弟函数还有一个区别，就是componentWillMount可以在服务器端被调用，也可以在浏览器端被调用；而componentDidMount只能在浏览器端被调用，在服务器端使用React的时候不会被调用。
+
+目前为止，我们构造的React应用例子都只是在浏览器端使用React，所以看不出区别，在后面关于“同构”应用的介绍时，我们会探讨在服务器端使用React的情况。
+
+至于为什么只有componentDidMount仅在浏览器端执行，这是一个实现上的决定，而不是设计时刻有意而为之。不过，如果非要有个解释的话，可以这么说，既然“装载”是一个创建组件并放到DOM树上的过程，那么，真正的“装载”是不可能在服务器端完成的，因为服务器端渲染并不会产生DOM树，通过React组件产生的只是一个纯粹的字符串而已。
+
+不管怎样，componentDidMount只在浏览器端执行，倒是给了我们开发者一个很好地位置去做只有浏览器端才做的逻辑，比如通过Ajax获取数据来填充组件的内容。
+
+在componentDidMount被调用的时候，组件已经被装载到DOM树上了，可以放心获取渲染出来的任何DOM。
+
+在实际开发过程中，可能会需要让React和其他UI库配合使用，比如，因为项目前期已经用jQuery开发了很多功能，需要继续使用这些基于jQuery的代码，有时候其他的UI库做某些功能比React更合适，比如d3.js已经支持了丰富的绘制图表的功能，在这些情况下，我们不得不考虑如何让React和其他UI库和平共处。
+
+以和jQuery配合为例，我们知道，React是用来取代jQuery的，但如果真的要让React和jQuery配合，就需要利用componentDidMount函数，当componentDidMount被执行时，React组件对应的DOM已经存在，所有的事件处理函数也已经设置好，这时候就可以调用jQuery的代码，让jQuery在已经绘制的DOM基础上增强新的功能。
+
+在componentDidMount中调用jQuery代码只处理了装载过程，要和jQuery完全结合，又要考虑React的更新过程，就需要使用下面要讲的componentDidUpdate函数。
+
+#### 2. 更新过程
+
+当组件被装载到DOM树上之后，用户在网页上可以看到组件的第一印象，但是要提供更好的交互体验，就要让该组件可以随着用户操作改变展现的内容，当props或者state修改的时候，就会引发组件的更新过程。
+
+更新过程会依次调用下面的生命周期函数，其中render函数和装载过程一样，没有差别。
+
+* componentWillReceiveProps
+
+* shouldComponentUpdate
+
+* componentWillUpdate
+
+* render
+
+* componentDidUpdate
+
+有意思的是，并不是所有的更新过程都会执行全部函数，下面会介绍到各种特例。
+
+* 1) componentWillReceiveProps(nextProps)
+
+关于这个componentWillReceiveProps存在一些误解。在网上有些教材声称这个函数只有当组件的props发生改变的时候才会被调用，其实是不正确的。实际上，只要是父组件的render函数被调用，在render函数里面被渲染的子组件就会经历更新过程，不管父组件传给子组件的props有没有改变，都会触发子组件的componentWillReceiveProps函数。
+
+注意，通过this.setState方法触发的更新过程不会调用这个函数，这是因为这个函数适合根据新的props值（也就是参数nextProps）来计算出是不是要更新内部状态state。更新组件内部状态的方法就是this.setState，如果this.setState的调用导致componentWillReceiveProps再一次被调用，那就是一个死循环了。
+
+让我们对ControlPanel做一些小的改进，来体会一下上面提到的规则。
+
+我们首先在Counter组件类里增加函数定义，让这个函数componentWillReceiveProps在console上输出一些文字，代码如下：
+
+```js
+componentWillReceiveProps(nextProps) {
+  console.log('enter componentWillReceiveProps ' + this.props.caption);
+}
+```
+
+在ControlPanel组件的render函数中，我们也做如下修改
+
+```js
+render() {
+  console.log('enter ControlPanel render');
+  return (
+    <div style={style}>
+      ...
+      <button onClick={ () => this.forceUpdate() }>
+        Click me to repaint!
+      </button>
+    </div>
+  )
+}
+```
+
+除了在ControlPanel的render函数入口处增加console输出，我们还增加了一个按钮，这个按钮的onClick事件引发了一个匿名函数，当这个函数被点击的时候，调用this.forceUpdate，每个React组件都可以通过forceUpdate函数强行引发一次重新绘制。
+
+在网页中，我们去点击那个新增加的按钮，可以看到浏览器的console中有如下输出：
+
+```console
+enter ControlPanel render
+enter componentWillReceiveProps First
+enter render First
+enter componentWillReceiveProps Second
+enter render Second
+enter componentWillReceiveProps Third
+enter render Third
+```
+
+可以看到，引发forceUpdate之后，首先是ControlPanel的render函数被调用，随后第一个Counter组件的componentWillReceiveProps函数被调用，然后Counter组件的render函数被调用，随后第二个第三个组件的这两个函数也依次被调用。
+
+然而，ControlPanel在渲染三个子组件的时候，提供的props值一直就没有变化，可见componentWillReceiveProps并不是当props值变化的时候才被调用，所以，这个函数有必要把传入参数nextProps和this.props做必要对比。nextProps代表的是这一次渲染传入的props值，this.props代表的上一次渲染时的props值，只有两者有变化的时候才有必要调用this.setState更新内部状态。
+
+在网页中，我们再次尝试点击第一个Counter组件的“`+`”按钮，可以看到浏览器的console输出如下：
+
+```console
+enter render First
+```
+
+明显，只有第一个组件的Counter的render函数被调用，函数componentWillReceiveProps没有被调用。因为点击“`+`”按钮引发的是第一个Counter组件的this.setState函数的调用，就像上面说过的一样，this.setState不会引发这个函数componentWillReceiveProps被调用。
+
+从这个例子我们也会发现，在React的组件组合中，完全可以只渲染一个子组件，而其它组件完全不需要渲染，这是提高React性能的重要方式。
+
+* 2) shouldComponentUpdate(nextProps, nextState)
 
 ---
 
