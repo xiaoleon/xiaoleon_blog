@@ -467,12 +467,222 @@ enter render First
 
 * 2) shouldComponentUpdate(nextProps, nextState)
 
+除了render函数，shouldComponentUpdate可能是React组件生命周期中最重要的一个函数了。
+
+说render函数重要，是因为render函数决定了该渲染什么，而说shouldComponentUpdate函数重要，是因为它决定了一个组件什么时候不需要渲染。
+
+render和shouldComponentUpdate函数，也是React生命周期函数中唯二两个要求有返回结果的函数。render函数的返回结果将用于构造DOM对象，而shouldComponentUpdate函数返回一个布尔值，告诉React库这个组件在这次更新过程中是否要继续。
+
+在更新过程中，React库首先调用shouldComponentUpdate函数，如果这个函数返回true，那就会继续更新过程，接下来调用render函数；反之，如果得到一个false，那就立刻停止更新过程，也就不会引发后续的渲染了。
+
+说shouldComponentUpdate重要，就是因为只要使用恰当，它就能够大大提高React组件的性能，虽然React的渲染性能已经很不错了，但是，不管渲染有多快，如果发现没必要重新渲染，那就干脆不用渲染好了，速度会更快。
+
+我们知道render函数应该是一个纯函数，这个纯函数的逻辑输入就是组件的props和state。所以，shouldComponentUpdate的参数就是接下来的props和state值。如果我们要定义shouldComponentUpdate，那就根据这两个参数，外加this.props和this.state来判断出返回true还是返回false。
+
+如果我们给组件添加shouldComponentUpdate函数，那就沿用所有React组件父类React.Component中的默认实现方式，默认实现方式就是简单地返回true，也就是每次更新过程都要重新渲染。当然，这是最稳妥的方式，大不了浪费一点，但是绝对不会出错。不过若我们要追求更高的性能，就不能满足于默认实现，需要定制这个函数shouldComponentUpdate。
+
+让我们尝试来给Counter组件增加一个shouldComponentUpdate函数。先来看看props，Counter组件支持两个props，一个叫caption，一个叫initValue。很明显，只有caption这个prop改变的时候，才有必要重新渲染。对于initValue，只是创建Counter组件实例时用于初始化计数值，在组件实例创建之后，无论怎么改，都不应该让Counter组件重新渲染。
+
+再来看看state，Counter组件的state只有一个值count，如果count发生了变化，那肯定应该重新渲染，如果count没变化，那就没必要了。
+
+现在，让我们给Counter组件类增加shouldComponentUpdate函数的定义，代码如下：
+
+```js
+shouldComponentUpdate(nextProps, nextState) {
+  return (nextProps.caption !== this.props.caption) ||
+    (nextState.count !== this.state.count);
+}
+```
+
+现在，只有当caption改变，或者state中的count值改变，shouldComponentUpdate才会返回true。
+
+值得一提的是，通过this.setState函数引发更新过程，并不是立刻更新组件的state值，在执行到函数shouldComponentUpdate的时候，this.state依然是this.setState函数执行之前的值，所以我们要做的实际上就是在nextProps、nextState、this.props和this.state中互相比对。
+
+我们在网页中引发一次ControlPanel的重新绘制，可以看到浏览器的console中输出这样：
+
+```console
+enter ControlPanel render
+enter componentWillReceiveProps First
+enter componentWillReceiveProps Second
+enter componentWillReceiveProps Third
+```
+
+可以看到，三个Counter组件的render函数都没有被调用，因为这个刷新没有改变caption的值，更没有引发组件内状态的改变，所以完全没有必要重新绘制counter。
+
+对于Counter这个简单的组件，我们无法感觉到性能的提高，但是，实际开发中会遇到更复杂更庞大的组件，这种情况下避免没必要的重新渲染，就会大大提高性能。
+
+* 3) componentWillUpdate和componentDidUpdate
+
+如果组件的shouldComponentUpdate函数返回true，React接下来就会依次调用对应组件的componentWillUpdate、render和componentDidUpdate函数。
+
+componentWillMount和componentDidMount，componentWillUpdate和componentDidUpdate，这两对函数一前一后地把render函数夹在中间。
+
+和装载过程不同的是，当在服务器端使用React渲染时，这一对函数中的Did函数，也就是componentDidUpdate函数，并不是只在浏览器端才执行的，无论更新过程发生在服务器端还是浏览器端，该函数都会被调用。
+
+在介绍componentDidMount函数时，我们说到可以利用componentDidMount函数执行其他UI库的代码，比如jQuery代码。当React组件被更新时，原有的内容被重新绘制，这时候就需要在componentDidUpdate函数再次调用jQuery代码。
+
+那么，componentDidUpdate函数不是可能会在服务器端也被执行吗？在服务器端怎么能够使用jQuery呢？实际上，使用React做服务器端渲染时，基本不会经历更新过程，因为服务器端只需要产出HTML字符串，一个装载过程就足够产出HTML了，所以正常情况下服务器端不会调用componentDidUpdate函数，如果调用了，说明我们的程序有错误，需要改进。
+
+#### 3. 卸载过程
+
+React组件的卸载过程只涉及一个函数componentWillUnmount，当React组件要从DOM树上删除掉之前，对应的componentWillUnmount函数会被调用，所以这个函数适合做一些清理性的工作。
+
+和装载过程和更新过程不一样，这个函数没有配对的Did函数，就一个函数，因为卸载完就完了，没有“卸载完再做的事情”。
+
+不过，componentWillUnmount中的工作往往和componentDidMount有关，比如，在componentDidMount中用非React的方法创造一些DOM元素，如果撒手不管可能会造成内存的泄漏，那就需要在componentWillUnmount中把这些创造的DOM元素清理掉。
+
 ---
 
-### 四、
+### 四、组件向外传递数据
 
-<!-- Todo -->
+通过构造ControlPanel和Counter，现在我们已经知道了如何通过props从父组件传递数据给子组件，但是，组件之间的交流是相互的，子组件某些情况下也需要把数据传递给父组件，我们接下来看看在React中如何实现这个功能。
+
+在ControlPanel中，包含三个Control子组件实例，每个Counter都有一个可以动态改变的计数值，我们希望ControlPanel能够即时显示出这三个子组件当前计数值之和。
+
+这个功能看起来很简单，但是要解决一个问题，就是要让ControlPanel“知道”三个子组件当前的计数值，而且是每次改变都要立刻知道，而Counter组件的当前值是组件的内部状态，如何让外部世界知道这个值呢？
+
+解决这个问题的方法，依然是利用prop。组件的prop可以是任何JavaScript对象，而在JavaScript中，函数是一等公民，函数本身就可以被看作一种对象，既可以像其他对象一样作为prop的值从父组件传递给子组件，又可以被子组件作为函数调用，这样事情就好办了。
+
+#### 1. 应用实例
+
+我们看到修改后的功能图如图所示
+
+![包含总数的ControlPanel应用效果图](/images/react-2/5.png)
+
+点击任何一个Counter的“`+`”按钮或者“`-`”按钮，可以看见除了所属Counter的计数变化，底部的总计数也会随之变化，这是因为Counter能够把自己状态改变的信息传递给外层的组件。
+
+接下来看实现这个功能的关键代码。
+
+在Counter组件中，对于点击“`+`”和“`-`”按钮的事件处理方法做了改动，代码如下：
+
+```js
+onClickIncrementButton() {
+  this.updateCount(true);
+}
+
+onCLickDecrementButton() {
+  this.updateCount(false);
+}
+
+updateCount(isIncrement) {
+  const previousValue = this.state.count;
+  const newValue = isIncrement ? previousValue + 1 : previousValue - 1;
+  this.setState({ count: newValue });
+  this.props.onUpdate(newValue, previousValue);
+}
+```
+
+现在，onClickIncrementButton函数和onClickDecrementButton函数的任务除了调用this.setState改变内部状态，还要调用this.props.onUpdate这个函数，为了避免重复代码，我们对原有代码做一下重构，提取了共同部分到updateCount函数里。
+
+对应的，Counter组件的propTypes和defaultProps就要增加onUpdate的定义，代码如下：
+
+```js
+Counter.propTypes = {
+  caption: PropTypes.string.isRequires,
+  initValue: PropTypes.number,
+  onUpdate: PropTypes.func
+};
+
+Counter.defaultProps = {
+  initValue: 0,
+  onUpdate: f => f
+};
+```
+
+新增加的prop叫做onUpdate，类型是一个函数，当Counter的状态改变的时候，就会调用这个给定的函数，从而达到通知父组件的作用。
+
+这样，Counter的onUpdate就成了作为子组件的Counter向父组件ControlPanel传递数据的渠道，我们先约定这个函数的第一个参数是Counter更新之后的值，第二个参数是更新之前的值，至于如何使用这两个参数的值，是父组件ControlPanel的逻辑，Counter不用操心，而且根据两个参数的值足够推导出数值是增加还是减少。
+
+从使用Counter组件的角度，在ControlPanel组件中也要做一些修改，现在ControlPanel需要包含自己的state，首先是构造函数部分，代码如下：
+
+```js
+constructor(props) {
+  super(props);
+
+  this.onCounterUpdate = this.onCounterUpdate.bind(this);
+
+  this.initValues = [0, 10, 20];
+  const initSum = this.initValues.reduce((a, b) => a + b, 0);
+
+  this.state = {
+    sum: initSum
+  };
+}
+```
+
+在ControlPanel组件被第一次渲染的时候，就需要显示三个计数器数值的综合，所以我们在构造函数中使用initValues数组记录所有的Counter的初始值，在初始化this.state之前，将initValues数组中所有值加在一起，作为this.state中sum字段的初始值。
+
+ControlPanel传递给Counter组件的onUpdate这个prop的值是onCounterUpdate函数，代码如下：
+
+```js
+onCounterUpdate(newValue, previousValue) {
+  const valueChange = newValue - previousValue;
+  this.setState({
+    sum: this.state.sum + valueChange
+  });
+}
+```
+
+onCounterUpdate函数的参数和Counter中调用的onUpdate prop的参数规格一致，第一个参数为新值，第二个参数为之前的值，两者之差就是改变值，将这个改变作用到this.state.sum上就是sum的新状态。
+
+遗憾的是，React虽然有PropType能够检查prop的类型，却没有任何机制来限制prop的参数规格，参数的一致性只能靠开发者来保证。
+
+ControlPanel组件的render函数中需要增加对this.state.sum和onCountUpdate的使用，代码如下：
+
+```js
+render() {
+  return (
+    <div style={style}>
+      <Counter onUpdate={this.onCountUpdate} caption="First" />
+      <Count onUpdate={this.onCountUpdate} caption="Second" initValue={this.initValues[1]} />
+      <Count onUpdate={this.onCountUpdate} caption="Third" initValue={this.initValues[2]} />
+      <hr />
+      <div>Total Count: {this.state.sum}</div>
+    </div>
+  );
+}
+```
+
+---
+
+### 五、React组件state和prop的局限
+
+是时候重新思考一下多个组件之间的数据管理问题了。在上面修改的代码中，不难发现其实实现得并不精妙，每个Count组件有自己的状态记录当前计数，而父组件ControlPanel也有一个状态来存储所有Counter计数总和，也就是说，数据发生了重复。
+
+数据如果出现重复，带来的一个问题就是如何保证重复的数据一致，如果数据存多份而且不一致，那就很难决定到底使用哪个数据作为正确结果了。
+
+在上面的例子中，ControlPanel通过onUpdate回调函数传递的新值和旧值来计算新的计数总和，设想一下，由于某种bug的原因，某个按钮的点击更新没有通知到ControlPanel，就会让ControlPanel中的sum状态和所有子组件Counter的count状态之和不一致，这时候，是应该相信ControlPanel还是Count呢？
+
+如图所示，逻辑上应该相同的状态，分别存放在不同组件中，就会导致这种困局。
+
+![组件状态不一致的困惑](/images/react-2/6.png)
+
+对于上面所说的问题，一个直观的解决方法是以某一个组件的状态为准，这个组件是状态的“领头羊”，其余组件都保持和“领头羊”的状态同步，但是在实际情况下这种方法可能很难实施。比如上面的例子中，每个Counter记录自己的计数值是很自然的，但是有三个Counter组件，也就有三只“领头羊”，让ControlPanel跟着三只“领头羊”走，似乎不是一个好主意。
+
+另一种思路，就是干脆不要让任何一个React组件扮演“领头羊”的角色，把数据源放在React组件之外形成全局状态，如下图所示，让各个组件保持和全局状态的一致，这样更容易控制。
+
+![React中提取出来](/images/react-2/7.png)
+
+图中全局状态就是唯一可靠的数据源，下一章我们会介绍，这就是Flux和Redux中Store的概念。
+
+除了state，利用prop在组件之间传递信息也会遇到问题。设想一下，在一个应用中，包含三级或者三级以上的组件结构，顶层的祖父级组件想要传递一个数据给最底层的子组件，用prop的方式，就只能通过父组件中转，而中间那一层父组件可能根本用不上这个prop，但是依然要支持这个prop，扮演好搬运工的角色，只因为子组件用得上，这明显违反了低耦合的设计要求。
+
+![跨级传递prop的困局](/images/react-2/8.png)
+
+---
+
+### 六、本章小结
+
+本章中，我们学习了构建高质量组件的原则，应用React一样要以构建高内聚低耦合的组件为目标，而保证组件高质量的一个重要工作就是保持组件对外接口清晰简洁。
+
+React利用prop来定义组件的对外接口，用state来代表内部的状态，某个数据选择用prop还是用state表示，取决于这个数据是对内还是对外。
+
+我们还介绍了React的生命周期，了解了装载过程、更新过程和卸载过程涉及的所有生命周期函数。
+
+在本章中我们利用ControlPanel和Counter两个组件演示了组件之间的通信方式，包括子组件向父组件传递信息的方式，同时也看出了使用React的state来存储状态的一个缺点，那就是数据的冗余和重复，这就是我们接下来要解决的问题。
+
+---
 
 ### 参考文献
 
-1. [《Todo》]()
+1. [《深入浅出React和Redux —— 程墨》]()
