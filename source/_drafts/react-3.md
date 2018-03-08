@@ -321,11 +321,720 @@ Dispatcher的waitFor可以接受一个数组作为参数，数组中的每个元
 
 * 4) View
 
+首先要说明，Flux框架下，View并不是说必须要使用React，View本身是一个独立的部分，可以用任何一种UI库来实现。
+
+不过，话说回来，既然我们都使用上Flux了，除非项目有大量历史遗留代码，否则实在没有理由不用React来实现View。
+
+存在于Flux框架中的React组件需要实现以下几个功能：
+
+* 创建时要读取Store上状态来初始化组件内部状态
+
+* 当Store上状态发生变化时，组件要立刻同步更新内部状态保持一致
+
+* View如果要改变Store状态，必须且只能派发action
+
+最后让我们来看看例子中的View部分，为了方便管理，所有View文件都放在src/views目录里。
+
+先看src/views/ControlPanel.js中的ControlPanel组件，其中render函数的实现和上一章很不一样，代码如下：
+
+```js
+render() {
+  return (
+    <div style={style}>
+      <Counter caption='First' />
+      <Counter caption='Second' />
+      <Counter caption='Third' />
+      <hr />
+      <Summary />
+    </div>
+  )
+}
+```
+
+可以注意到，和前面章节中的ControlPanel不同，Counter组件实例只有caption属性，没有initValue属性。因为我们把计数值包括初始值全都放到CounterStore中去了，所以在创造Counter组件实例的时候就没必要指定initValue了。
+
+接着看src/views/Counter.js中定义的Counter组件，构造函数中初始化this.state的方式有了变化，代码如下：
+
+```js
+constructor(props) {
+  super(props);
+
+  this.onChange = this.onChange.bind(this);
+  this.onClickIncrementButton = this.onClickIncrementButton.bind(this);
+  this.onClickDecrementButton = this.onClickDecrementButton.bind(this);
+
+  this.state = {
+    count: CounterStore.getCounterValues()[props.cpation]
+  }
+}
+```
+
+在构造函数中，CounterStore.getCounterValues函数获得了所有计数器的当前值，然后把this.state初始化为对应caption字段的值，也就是说Counter组件的store来源不再是prop，而是Flux的Store。
+
+Counter组件中的state应该成为Flux Store上状态的一个同步镜像，为了保持两者一致，除了在构造函数中的初始化之外，在之后当CounterStore上状态变化时，Counter组件也要对应变化，代码如下：
+
+```js
+componentDidMount() {
+  CounterStore.addChangeListener(this.onChange);
+}
+
+componentWillUnmount() {
+  CounterStore.removeChangeListener(this.onChange);
+}
+
+onChange() {
+  const newCount = CounterStore.getCounterValues()[this.props.caption];
+  this.setState({ count: newCount });
+}
+```
+
+如上面的代码所示，在componentDidMount函数中通过CounterStore.addChangeListener函数监听了CounterStore的变化之后，只要CounterStore发生变化，Counter组件的onChange函数就会被调用。与componentDidMount函数中监听事件对应，在componentWillUnmount函数中删除了这个监听。
+
+接下来，要看React组件如何派发action，代码如下：
+
+```js
+onClickIncrementButton() {
+  Actions.increment(this.props.action);
+}
+
+onClickDecrementButton() {
+  Actions.decrement(this.props.action);
+}
+
+render() {
+  const {caption} = this.props;
+  return (
+    <div>
+      <button style={buttonStyle} onClick={this.onClickIncrementButton}>+</button>
+      <button style={buttonStyle} onClick={this.onClickDecrementButton}>-</button>
+      <span>{caption} count: {this.state.count}</span>
+    </div>
+  )
+}
+```
+
+可以注意到，在Counter组件中有两处用到CounterStore的getCounterValues函数的地方，第一处在构造函数中初始化this.state的时候，第二处是在响应CounterStore状态变化的onChange函数中，同样一个Store的状态，为了转换为React组件的状态，有两次重复的调用，这看起来似乎不是很好。但是，React组件的状态就是这样，在构造函数中要对this.state初始化，要更新它就要调用this.setState函数。
+
+有没有更简洁的办法？比如说只使用CounterStore.getCounterValues一次？可惜，只要我们想用组件的状态来驱动组件的渲染，就不可避免要有这两步。那么如果我们不利用组件的状态呢？
+
+如果不使用组件的状态，那么我们就可以逃出这个必须在代码中使用Store两次的宿命，在接下来的章节里，我们会遇到这种“无状态”组件。
+
+Summary组件，存在于src/views/Summary.js中，和Counter类似，在constructor中初始化组件状态，通过在componentDidMount中添加对SummaryStore的监听来同步状态，因为这个View不会有任何交互功能，所以没有派发出任何action。
+
+#### 3. Flux的优势
+
+本章的例子和上一章我们只用React的实现效果一样，但是工作方式有了大变化。
+
+回顾一下完全只用React实现的版本，应用的状态数据只存在于React组件之中，每个组件都要维护驱动自己渲染的状态数据，单个组件的状态还好维护，但是如果多个组件之间的状态有关联，但就麻烦了。比如Counter组件和Summary组件，Summary组件就需要维护所有Counter组件计数值的总和，Counter组件和Summary组件分别维护自己的状态，如何同步Summary和Counter状态就成了问题，React只提供了props方法让组件之间通信，组件之间关系稍微复杂一点，这种方式就显得非常笨拙。
+
+Flux架构下，应用的状态被放在了Store中，React组件只是扮演View的作用，被动根据Store的状态来渲染。在上面的例子中，React组件依然有自己的状态，但是已经完全沦为Store组件的一个映射，而不是主动变化的数据。
+
+在完全只用React实现的版本里，用户的交互操作，比如点击“`+`”按钮，引发的事件处理函数直接通过this.setState改变组件的状态。在Flux的实现版本里，用户的操作引发的是一个“动作”的派发，这个派发的动作会发送给所有的Store对象，引起Store对象的状态改变，而不是直接引发组件的状态改变。因为组件的状态是Store状态的映射，所以改变了Store对象也就触发了React组件对象的状态改变，从而引发了界面的重新渲染。
+
+Flux带来了哪些好处呢？最重要的就是“单向数据流”的管理方式。
+
+在Flux的理念里，如果要改变界面，必须改变Store中的状态，如果要改变Store中的状态，就必须派发一个action对象，这就是规矩。在这个规矩之下，想要追溯一个应用的逻辑就变得非常容易。
+
+我们已经讨论过MVC框架的缺点，MVC最大的问题就是无法禁绝View与Model之间的直接对话，对应于MVC中的View就是Flux中的View，对应于MVC中Model的就是Flux中的Store。在Flux中，Store只有get方法，没有set方法，根本不可能直接去修改其内部状态，View只能通过get方法获取Store的状态，无法直接去修改状态，如果View想要修改Store状态的话，只有派发一个action给Dispatcher。
+
+这看起来是一个“限制”，但却是一个很好地“限制”，禁绝了数据流混乱的可能。
+
+简单来说，Flux的体系下，驱动界面改变始于一个动作的派发，别无他法。
+
+#### 4. Flux的不足
+
+任何工具不可能只有优点没有缺点，接下来让我们看看Flux的不足之处，只有了解了Flux的不足之处，才能理解为什么会出现Flux的改进框架Redux。
+
+* 1) Store之间的依赖关系
+
+在Flux的体系中，如果两个Store之间有逻辑依赖关系，就必须用上Dispatcher的waitFor函数。在上面的例子中我们已经使用过waitFor函数，SummaryStore对action的处理，依赖于CounterStore已经处理过了。所以，必须要通过waitFor函数告诉Dispatcher，先让CounterStore处理这些action对象，只有CounterStore搞定之后SummaryStore才继续。
+
+那么，SummaryStore如何标识CounterStore呢？靠的是register函数的返回值dispatchToken，而dispatchToken的产生，当然是CounterStore控制的，换句话说，要这样设计：
+
+* CounterStore必须要把注册回调函数时产生的dispatchToken公之于众
+
+* SummaryStore必须要在代码里建立对CounterStore的dispatchToken的依赖
+
+虽然Flux这个设计的确解决了Store之间的依赖关系，但是，这样明显的模块之间的一来，看着还是让人感觉不太舒服，毕竟最好的依赖管理是根本不让依赖产生。
+
+* 2) 难以进行服务器端渲染
+
+关于服务器端渲染，我们在后面会详细介绍，在这里，我们只需要知道，如果要在服务器端渲染，输出不是一个DOM树，而是一个字符串，准确来说就是一个全是HTML的字符串。
+
+在Flux的体系中，有一个全局的Dispatcher，然后每一个Store都是一个全局唯一的对象，这对于浏览器端应用完全没有问题，但是如果放在服务器端，就会有大问题。
+
+和一个浏览器网页只服务于一个用户不同，在服务器端要同时接受很多用户的请求，如果每个Store都是全局唯一对象，那不同请求的状态肯定就乱套了。
+
+并不是说Flux不能做服务器端渲染，只是说让Flux做服务器端渲染很困难，实际上，Facebook也说得很清楚，Flux不是设计用作服务器端渲染的，他们也从来没有尝试过把Flux应用于服务器端。
+
+* 3) Store混杂了逻辑和状态
+
+Store封装了数据和处理数据的逻辑，用面向对象的思维来看，这是一件好事，毕竟对象就是这样定义的。但是，当我们需要动态替换一个Store的逻辑时，只能把这个Store整体替换掉，那也就无法保持Store中存储的状态。
+
+在开发模式下，开发人员要不停地对代码进行修改，如果Store在某个状态下引发了bug，如果能在不毁掉状态的情况下替换Store的逻辑，那就最好了，开发人员就可以不断地改进逻辑来验证这个状态下bug是否被修复了。
+
+还有一些应用，在生产环节下就要根据用户属性来动态加载不同的模块，而且动态加载模块还希望不要网页重新加载，这时候也希望能够在不修改应用状态的前提下重新加载应用逻辑，这就是热加载，后面章节会介绍如何实现热加载。
+
 ---
 
-### 二、
+### 二、Redux
 
-<!-- Todo -->
+我们把Flux看作一个框架理念的话，Redux是Flux的一种实现，除了Redux之外，还有很多实现Flux的框架，比如Reflux、Fluxible等，毫无疑问Redux获得的关注最多，这不是偶然的，因为Redux有很多其他框架无法比拟的优势。
+
+#### 1. Redux的基本原则
+
+2013年问世的Flux饱受争议，而2015年Dan Abramov提出了在Flux基础上的改进框架Redux，则是一鸣惊人，在所有Flux的变体中算是最受关注的框架，没有之一。
+
+Flux的基本原则是“单向数据流”，Redux在此基础上强调三个原则：
+
+* 唯一数据源（Single Source of Truth）
+
+* 保持状态只读（State is read-only）
+
+* 数据改变只能通过纯函数完成（Changes are made with pure functions）
+
+让我们逐一解释这三条基本原则
+
+* 1) 唯一数据源
+
+唯一数据源指的是应用的状态数据应该只存储在唯一的一个Store上。
+
+我们已经知道，在Flux中，应用可以拥有多个Store，往往根据功能把应用的状态数据划分给若干个Store分别存储管理。比如，在上面的ControlPanel中，我们创造了CounterStore和SummaryStore。
+
+如果状态数据分散在多个Store中，容易造成数据冗余，这样数据一致性方面就会出问题。虽然利用Dispatcher的waitFor方法可以保证多个Store之间的更新顺序，但是这又产生了不同Store之间的显示依赖关系，这种依赖关系的存在增加了应用的复杂度，容易带来新的问题。
+
+Redux对这个问题的解决方法就是，整个应用只保持一个Store，所有组件的数据源就是这个Store上的状态。
+
+这个唯一Store上的状态，是一个树形的结构，每个组件往往只是用树形对象上一部分的数据，而如何设计Store上状态的结构，就是Redux应用的核心问题，我们接下来会描述细节。
+
+* 2) 保持状态只读
+
+保持状态只读，就是说不能去直接修改状态，要修改Store的状态，必须要通过派发一个action对象完成，这一点，和Flux的要求并没有什么区别。
+
+如果只看这个原则的字面意思，可能会让我们有些费解，还记得那个公式吗？`UI=render(state)`，我们已经能够说过驱动用户界面更改的是状态，如果状态都是只读的不能修改，怎么可能引起用户界面的变化呢？
+
+当然，要驱动用户界面渲染，就要改变应用的状态，但是改变状态的方法不是去修改状态的值，而是创建一个新的状态对象返回给Redux，由Redux完成新的状态的组装。
+
+这就引出了下面的第三条原则。
+
+* 3) 数据改变只能通过纯函数完成
+
+这里所说的纯函数就是Reducer，Redux这个名字的前三个字母Red代表的就是Reducer。按照创作者Dan Abramov的说法，Redux名字的含义是Reducer+Flux。
+
+Reducer不是一个Redux特定的术语，而是一个计算机科学中的通用概念，很多语言和框架都有对Reducer函数的支持。以JavaScript为例，数组类型就有reduce函数，接受的参数就是一个reducer，reduce做的事情就是把数组所有元素依次做“规约”，对每个元素都调用一次reducer，通过reducer函数完成规约所有元素的功能。
+
+```js
+[1, 2, 3, 4].reduce(function reducer(accumulation, item) {
+  return accumulation + item;
+}, 0);
+```
+
+上面的代码中，reducer函数接受两个参数，第一个参数是上一次规约的结果，第二个参数是这一次规约的元素，函数体是返回两者之和，所以这个规约的结果就是所有元素之和。
+
+在Redux中，每个reducer的函数签名如下所示：
+
+```js
+reducer(state, action)
+```
+
+第一个参数state是当前的状态，第二个参数是接收到的action对象，而reducer函数要做的事情，就是根据state和action的值产生一个新的对象返回，注意reducer必须是纯函数，也就是说函数的返回结果必须完全由参数state和action决定，而且不产生任何副作用，也不能修改参数state和action对象。
+
+让我们回顾一下Flux中的Store是如何处理函数的，代码如下：
+
+```js
+CounterStore.dispatchToken = AppDispatcher.register((action) => {
+  if (action.type === ActionTypes.INCREMENT) {
+    counterValues[action.counterCaption]++;
+    CounterStore.emitChange();
+  } else if (action.type === ActionTypes.DECREMENT) {
+    counterValues[action.counterCaption]--;
+    CounterStore.emitChange();
+  }
+});
+```
+
+Flux更新状态的函数只有一个参数action，因为状态是由Store直接管理的，所以处理函数中会看到代码直接更新state；在Redux中，一个实现同样功能的reducer代码如下：
+
+```js
+function reducer(state, action) => {
+  const {counterCaption} = action;
+
+  switch(action.type) {
+    case ActionTypes.INCREMENT:
+      return {...state, [counterCaption]: state[counterCaption] + 1};
+    case ActionTypes.DECREMENT:
+      return {...state, [counterCaption]: state[counterCaption] - 1};
+    default:
+      return state;
+  }
+}
+```
+
+可以看到reducer函数不光接受action为参数，还接受state为参数。也就是说，Redux的reducer只负责计算状态，却并不负责存储状态。
+
+我们在后面的实例中会详细解释这个reducer的构造。
+
+读到这里，读者可能会有一个疑问，从Redux的基本原则来看，Redux并没有赋予我们强大的功能，反而是给开发者增加了很多限制，开发者丧失了想怎么写就怎么写的灵活度。
+
+> “如果你愿意限制做事方式的灵活度，你几乎总会发现可以做得更好。” —— John Carmark
+
+作为制作出《Doom》《Quake》这样游戏的杰出开发者，John Carmark这句话道出了软件开发中的一个真谛。
+
+在计算机编程的世界里，完成任何一件任务，可能都有一百种以上的方法，但是无节制的灵活度反而让软件难以维护，增加限制是提高软件质量的法门。
+
+#### 2. Redux实例
+
+前面我们用Flux实现了一个ControlPanel的应用，接下来让我们用Redux来重新实现一遍同样的功能，通过对比就能看出二者的差异。
+
+React和Redux事实上是两个独立的产品，一个应用可以使用React而不是用Redux，也可以使用Redux而不是用React，但是，如果两者结合使用，没有理由不使用一个名叫react-redux的库，这个库能够大大简化代码的书写。
+
+不过，如果一开始就使用react-redux，可能对其设计思路完全一头雾水，所以，我们的实例先不采用react-redux库，从最简单的Redux使用方法开始，初步改进，循序渐进地过渡到使用react-redux。
+
+最基本的Redux实现，存在与本书对应Github的chapter-03/redux_basic目录中，在这里我们只关注使用Redux实现和使用Flux不同的地方。
+
+首先看关于action对象的定义，和Flux一样，Redux应用习惯上把action类型和action构造函数分成两个文件定义，其中定义action类型的src/ActionTypes.js和Flux版本没有任何差别，但是src/Actions.js文件就不大一样了，代码如下：
+
+```js
+import * as ActionTypes from './ActionTypes.js';
+
+export const increment = (counterCaption) => {
+  return {
+    type: ActionTypes.INCREMENT,
+    counterCaption: counterCaption
+  };
+};
+
+export const decrement = (counterCaption) => {
+  return {
+    type: ActionTypes.DECREMENT,
+    counterCaption: counterCaption
+  }
+}
+```
+
+和Flux的src/Actions.js文件对比就会发现，Redux中每个action构造函数都返回一个action对象，而Flux版本中action构造函数并不返回什么，而是把构造的动作函数立刻通过调用Dispatcher的dispatch函数派发出去。
+
+这是一个习惯上的差别，接下来我们会发现，在Redux中，很多函数都是这样不做什么产生副作用的动作，而是返回一个对象，把如何处理这个对象的工作交给调用者。
+
+在Flux中我们要用到一个Dispatcher对象，但是在Redux中，就没有Dispatcher这个对象了，Dispatcher存在的作用就是把一个action对象分发给了多个注册了的Store，既然Redux让全局只有一个Store，那么再创造一个Dispatcher也的确意义不大。所以，Redux中“分发”这个功能，从一个Dispatcher对象简化为Store对象上的一个函数dispatch，毕竟只有一个Store，要分发也是分发给这个Store，就调用Store上一个表示分发的函数，合情合理。
+
+我们创造一个src/Store.js文件，这个文件输出全局唯一的那个Store，代码如下：
+
+```js
+import {createStore} from 'redux';
+import reducer from './Reducer.js';
+
+const initValues = {
+  'First': 0,
+  'Second': 1,
+  'Third': 2
+};
+
+const store = createStore(reducer, initValues);
+
+export default store;
+```
+
+在这里，我们接触到了Redux库提供的createStore函数，这个函数第一个参数代表更新状态的reducer，第二个参数是状态的初始值，第三个参数可选，代表Store Enhancer，在这个例子中用不上，后面章节会详细介绍。
+
+确定Store状态，是设计好Redux应用的关键。从Store状态的初始值看得出来，我们的状态是这样一个格式：状态上每个字段名代表Counter组件的名（caption），字段的值就是这个组件当前的计数值，根据这些状态字段，足够支撑三个Counter组件。
+
+那么，为什么没有状态来支持Summary组件呢？因为Summary组件的状态，完全可以通过把Counter状态数值加在一起得到，没有必要制造冗余数据存储，这也符合Redux“唯一数据源”的基本原则。记住：Redux的Store状态设计的一个主要原则：避免冗余数据。
+
+接下来看src/Reducer.js中定义的reducer函数，代码如下：
+
+```js
+import * as ActionTypes from './ActionTypes.js';
+
+export default (state, action) => {
+  const {counterCaption} = action;
+
+  switch(action.type) {
+    case ActionTypes.INCREMENT:
+      return {...state, [counterCaption]: state[counterCaption] + 1};
+    case ActionTypes.DECREMENT:
+      return {...state, [counterCaption]: state[counterCaption] - 1};
+    default:
+      return state;
+  }
+}
+```
+
+和Flux应用中每个Store注册的回调函数一样，reducer函数中往往包含以action.type为判断条件的if-else或者switch语句。
+
+和Flux不同的是，多了一个参数state。在Flux的回调函数中，没有这个参数，因为state是由Store管理的，而不是由Flux管理的。Redux中把存储state的工作抽取出来交给Redux框架本身，让reducer只用关心如何更新state，而不要管state怎么存。
+
+代码中使用了三个句号组成的扩展操作符，表示把state中所有字段扩展开，而后面对counterCaption值对应的字段会赋上新值，像下面的代码
+
+```js
+return {...state, [counterCaption]: state[counterCaption] + 1};
+```
+
+逻辑上等同于
+
+```js
+const newState = Object.assign({}, state);
+newState[counterCaption]++;
+return newState;
+```
+
+和Flux很不一样的是，在reducer中，绝对不能去修改参数中的state，如果我们直接修改state并返回false，代码如下，注意这不是正确写法：
+
+```js
+export default (state, action) => {
+  const {counterCaption} = action;
+
+  switch(action.type) {
+    case ActionTypes.INCREMENT:
+      state[counterCaption]++;
+    case ActionTypes.DECREMENT:
+      state[counterCaption]--;
+  }
+
+  return state;
+}
+```
+
+像上面这样写，似乎更简单直接，但实际上犯了大错，因为reducer应该是一个纯函数，纯函数不应该产生任何副作用。
+
+接下来，我们看View部分，View部分代码都在src/views目录下。看看src/views/ControlPanel.js，作为这个应用最顶层的组件ControlPanel，内容和Flux例子中没有任何区别。然后是Counter组件，存在于src/views/Counter.js中，这就和Flux不大一样了，首先是构造函数中初始化this.state的来源不同，代码如下：
+
+```js
+import store from '../Store.js';
+
+class Counter extends Component {
+  constructor(props) {
+    super(props);
+    ...
+    this.state = this.getOwnState();
+  }
+
+  getOwnState() {
+    return {
+      value: store.getState()[this.props.caption]
+    };
+  }
+}
+```
+
+和Flux例子一样，在这个视图文件中我们要引入Store，只不过这次我们引入的Store不叫CounterStore，而是一个唯一的Redux Store，所以名字就叫store，通过store.getState()能够获得store上存储的所有状态，不过每个组件往往只需要使用返回状态的一部分数据。为了避免重复代码，我们把从store获得状态的逻辑放在getOwnState函数中，这样任何关联Store状态的地方都可以重用这个函数。
+
+和Flux实现的例子一样，仅仅在构造函数时根据store来初始化this.state还不够，要保持store上状态和this.state的同步，代码如下：
+
+```js
+onChange() {
+  this.setState(this.getOwnState());
+}
+
+componentDidMount() {
+  store.subscribe(this.onChange);
+}
+
+componentWillUnmount() {
+  store.unsubscribe(this.onChange);
+}
+```
+
+在componentDidMount函数中，我们通过Store的subscribe监听其变化，只要Store状态发生变化，就会调用这个组件的onChange方法；在componentWillUnmount函数中，我们把这个监听注销掉，这个清理动作和componentDidMount中的动作对应。
+
+其实，这个增加监听函数的语句也可以写在构造函数里，但是为了让mount和unmount的对应看起来更清晰，在所有的例子中我们都把加载监听的函数放在componentDidMount中。
+
+除了从store同步状态，视图中可能会想要改变store中的状态，和Flux一样，改变store中状态唯一的方法就是派发action，代码如下：
+
+```js
+onIncrement() {
+  store.dispatch(Actions.increment(this.props.caption));
+}
+
+onDecrement() {
+  store.dispatch(Actions.decrement(this.props.caption));
+}
+```
+
+上面定义了onIncrement和onDecrement方法，在render函数中的JSX中需要使用这两种函数，代码如下：
+
+```js
+render() {
+  const value = this.state.value;
+  const {caption} = this.props;
+
+  return (
+    <div>
+      <button style={buttonStyle} onClick={this.onIncrement}>+</button>
+      <button style={buttonStyle} onClick={this.onDecrement}>-</button>
+      <span>{caption} count: {value}</span>
+    </div>
+  );
+}
+```
+
+在render函数中，对于点击“`+`”按钮和“`-`”按钮的onClick事件，被分别挂上了onIncrement函数和onDecrement函数，所做的事情就是派发对应的action对象出去。注意和Flux例子的区别，在Redux中，action构造函数只负责创建对象，要派发action就需要调用store.dispatch函数。
+
+组件的render函数所显示的动态内容，要么来自于props，要么来自于自身状态。
+
+然后再来看看src/views/Summary.js中的Summary组件，其中getOwnState函数的实现代码如下：
+
+```js
+getOwnState() {
+  const state = store.getState();
+  let sum = 0;
+  for (const key in state) {
+    sum += state[key];
+  }
+  return { sum: sum };
+}
+```
+
+Summary组件的套路和Counter组件差不多，唯一值得一提的就是getOwnState函数的实现。因为Store的状态中只记录了各个Counter组件的计数值，所以需要在getOwnState状态中自己计算出所有计数值总和出来。
+
+#### 3. 容器组件和傻瓜组件
+
+分析一下上面的Redux例子中的Counter组件和Summary组件部分，可以发现一个规律，在Redux框架下，一个React组件基本上就是要完成以下两个功能：
+
+* 和Redux Store打交道，读取Store的状态，用于初始化组件的状态，同时还要监听Store的状态改变；当Store状态发生变化时，需要更新组件状态，从而驱动组件重新渲染；当需要更新Store状态时，就要派发action对象
+
+* 根据当前props和state，渲染出用户界面
+
+还记得那句话吗？让一个组件只专注做一件事，如果发现一个组件做的事情太多了，就可以把这个组件拆分成多个组件，让每个组件依然只专注于一件事。
+
+如果React组件都是要包办上面说的两个任务，似乎做的事情也的确稍微多了一点。我们可以考虑拆分，拆分为两个组件，分别承担一个任务，然后把两个组件嵌套起来，完成原本一个组件完成的所有任务。
+
+这样的关系里，两个组件是父子组件的关系。业界对于这样的拆分有多种叫法，承担第一个任务的组件，也就是负责和Redux Store打交道的组件，处于外层，所以被称为容器组件（Container Component）；对于承担第二个任务的组件，也就是只专心负责渲染界面的组件，处于内层，叫做展示组件（Presentational Component）。
+
+外层的容器组件又叫聪明组件（Smart Component），内层的展示组件又叫傻瓜组件（Dumb Component），所谓“聪明”还是“傻瓜”只是相对而言，并没有褒贬的含义。
+
+![容器组件和傻瓜组件的分工](/images/react-3/4.png)
+
+傻瓜组件就是一个纯函数，根据props产生结果。说是“傻瓜”，这种纯函数实现反而体现了计算机编程中的大智慧，大智若愚。
+
+而容器组件，只是做的事情涉及一些状态转换，虽然名字里有“聪明”，其实做的事情都有套路，我们很容易就能抽取出共同之处，复用代码完成任务，并不需要开发者极其聪明才能掌握。
+
+在我们把一个组件拆分为容器组件和傻瓜组件的时候，不只是功能分离，还有一个比较大的变化，那就是傻瓜组件不再需要有状态了。
+
+实际上，让傻瓜组件无状态，是我们拆分的主要目的之一，傻瓜组件只需要根据props来渲染结果，不需要state。
+
+那么，状态哪里去了呢？全都交给容器组件去打点，这是它的责任。容器组件如何把状态传递给傻瓜组件呢？通过props。
+
+值得一提的是，拆分容器组件和傻瓜组件，是设计React组件的一种模式，和Redux没有直接关系。在Flux或者任何一种其他框架下都可以使用这种模式，只不过为了引出后面的react-redux，我们才在这里开始介绍罢了。
+
+我们还是通过例子来感受一下容器组件和傻瓜组件如何协同工作，对应的代码在chapter-03/redux_smart_dumb目录下，是前面chapter-03/redux_basic的改进，只有视图部分代码有改变。
+
+在视图代码src/views/Counter.js中定义了两个组件，一个是Counter，这是傻瓜组件，另一个是CounterContainer，这是容器组件。
+
+傻瓜组件Counter代码的逻辑前所未有的简单，只有一个render函数，代码如下：
+
+```js
+class Counter extends Component {
+  render() {
+    const {caption, onIncrement, onDecrement, value} = this.props;
+
+    return (
+      <div>
+        <button style={buttonStyle} onClick={onIncrement}>+</button>
+        <button style={buttonStyle} onClick={onDecrement}>-</button>
+        <span>{caption} count: {value}</span>
+      </div>
+    );
+  }
+}
+```
+
+可以看到，Counter组件完全没有state，只有一个render方法，所有的数据都来自于props，这种组件叫做“无状态”组件。
+
+而CounterContainer组件承担了所有的和Store关联的工作，它的render函数所做的就是渲染傻瓜组件Counter而已，只负责传递必要的prop，代码如下：
+
+```js
+class CounterContainer extends Component {
+  render() {
+    return <Counter caption={this.props.caption} 
+            onIncrement={this.onIncrement}
+            onDecrement={this.onDecrement}
+            value={this.state.value} />
+  }
+}
+
+export default CounterContainer;
+```
+
+可以看到，这个文件export导出的不再是Counter组件，而是CounterContainer组件，也就是对于使用这个视图的模块来说，根本不会感受到傻瓜组件的存在，从外部看到的就只是容器组件。
+
+对于无状态组件，其实我们可以进一步缩减代码，React支持只用一个函数代表的无状态组件，所以，Counter组件可以进一步简化，代码如下：
+
+```js
+function Counter(props) {
+  const {caption, onIncrement, onDecrement, value} = props;
+
+  return (
+    <div>
+      <button style={buttonStyle} onClick={onIncrement}>+</button>
+      <button style={buttonStyle} onClick={onDecrement}>-</button>
+      <span>{caption} count: {value}</span>
+    </div>
+  );
+}
+```
+
+因为没有状态，不需要用对象表示，所以连类都不要了，对于一个只有render方法的组件，缩略为一个函数足矣。
+
+注意，改为这种写法，获取props就不能用this.props，而是通过函数的参数props获得，无状态组件的props参数和有状态组件的this.props内容和结构完全一样。
+
+还有一种惯常写法，就是把解构赋值直接放在参数部分
+
+```js
+function Counter({caption, onIncrement, onDecrement, value}) {
+  // 函数体中可以直接使用caption、onIncrement等变量
+}
+```
+
+看src/views/Summary.js中，内容也被分解为了傻瓜组件Summary和SummaryContainer，方式和Counter差不多，不再赘述。
+
+重新审阅代码，我们可以看到CounterContainer和SummaryContainer代码有很多相同之处，写两份实在是重复，既然都是套路，完全可以抽取出来，后面的章节会讲如何应用react-redux来减少重复代码。
+
+#### 4. 组件Context
+
+在介绍react-redux之前，我们重新看一看现在的Counter和Summary组件文件，发现它们都直接导入Redux Store。
+
+```js
+import store from './Store.js';
+```
+
+虽然Redux应用全局就一个Store，这样的直接导入依然有问题。
+
+在实际工作中，一个应用的规模会很大，不会所有的组件都放在一个代码库里，有时候还要通过npm方式引入第三方的组件。想想看，当开发一个独立的组件的时候，都不知道自己这个组件会存在于哪个应用中，当然不可能预先知道定义唯一Redux Store的文件位置了，所以，在组件中直接导入Store是非常不利于组件复用的。
+
+一个应用中，最好只有一个地方需要直接导入Store，这个位置当然应该是在调用最顶层React组件的位置。在我们的ControlPanel例子中，就是应用的入口文件src/index.js中，其余组件应该避免直接导入Store。
+
+不让组件直接导入Store，那就只能让组件的上层组件把Store传递下来了。首先想到的当然是用props，毕竟，React组件就是用props来传递父子组件之间的数据的。不过，这种方法有一个很大的缺陷，就是从上到下，所有的组件都要帮助传递这个props。
+
+设想在一个嵌套多层的组件结构中，只有最里层的组件才需要使用Store，但是为了把Store从外层传递到最里层，就要求中间所有的组件都需要增加对这个store prop的支持，即使根本不使用它，这无疑很麻烦。
+
+还是来看ControlPanel这个例子，最顶层的组件ControlPanel根本就不使用Store，如果仅仅为了让它传递一个prop给子组件Counter和Summary就要求它支持state prop，显然非常不合理。所以，用prop传递store不是一个好方法。
+
+React提供了一个叫Context的功能，能够完美地解决这个问题。
+
+![React的Context](/images/react-3/5.png)
+
+所谓Context，就是“上下文环境”，让一个树状组件上所有组件都能访问一个共同的对象，为了完成这个任务，需要上级组件和下级组件配合。
+
+首先，上级组件要宣称自己支持context，并且提供一个函数来返回代表Context的对象。
+
+然后，这个上级组件之下的所有下级组件，只要宣称自己需要这个Context，就可以通过this.context访问到这个共同的环境对象。
+
+我们尝试给ControlPanel程序加上context功能来优化，相关代码在chapter-3/redux_with_context目录中，这个应用是对前面redux_smart_dumb的改进。
+
+因为Redux应用中只有一个Store，因此所有组件如果要使用Store的话，只能访问这唯一的Store。很自然，希望顶层的组件来扮演这个Context提供者的角色，只要顶层组件提供包含store的context，那就覆盖了整个应用的所有组件，简单而且够用。
+
+不过，每个应用的顶层组件不同，在我们的ControlPanel例子里顶层组件是ControlPanel，在另一个应用里会有另一个组件。而且，ControlPanel有它自己的职责，我们没有理由把它复杂化，没必要非要让它扮演context提供者的功能。
+
+我们来创建一个特殊的React组件，它将是一个通用的context提供者，可以应用在任何一个应用中，我们把这个组件叫做Provider。在src/Provider.js中，首先定义一个名为Provider的React组件，代码如下：
+
+```js
+import {PropTypes, Component} from 'react';
+
+class Provider extends Component {
+  getChildContext() {
+    return {
+      store: this.props.store
+    }
+  }
+
+  render() {
+    return this.props.children;
+  }
+}
+```
+
+Provider也是一个React组件，不过它的render函数就是简单地把子组件渲染出来，在渲染上，Provider不做任何附加的事情。
+
+每个React组件的props中都可以包含一个特殊属性children，代表的是子组件，比如这样的代码，在Provider的render函数中this.props.children就是两个Provider标签之间的`<ControlPanel />`
+
+```js
+<Provider>
+  <ControlPanel />
+</Provider>
+```
+
+除了把渲染工作完全交给子组件，Provider还要提供一个函数getChildContext，这个函数返回的就是代表Context的对象。我们的Context中只有一个字段store，而且我们也希望Provider足够通用，所以并不在这个文件中导入store，而是要求Provider的使用者通过prop传递进来store。
+
+为了让Provider能够被React认可为一个Context的提供者，还需要指定Provider的childContextTypes属性，代码如下：
+
+```js
+Provider.childContextTypes = {
+  store: ProTypes.object
+}
+```
+
+Provider还需要定义类的childContextTypes，必须和getChildContext对应，只有这两者都齐备，Provider的子组件才有可能访问到context。
+
+有了Provider，我们就可以改进一下应用的入口src/index.js文件了，代码如下：
+
+```js
+import store from './Store.js';
+import Provider from './Provider.js';
+
+ReactDOM.render(
+  <Provider store={store}>
+    <ControlPanel />
+  </provider>,
+  document.getElementById('root')
+);
+```
+
+在前面所有的例子中，React.render的第一个参数就是顶层组件ControlPanel。现在，这个ControlPanel作为子组件被Provider包住了，Provider成为了顶层组件。当然，如同我们上面看到的，Provider只是把渲染工作完全交给子组件，它扮演的角色只是提供Context，包住了最顶层的ControlPanel，也就让context覆盖了整个应用中的所有组件。
+
+至此，我们完成了提供Context的工作，接下来我们看底层组件如何使用Context。
+
+我们可以顺便看一眼src/views/ControlPanel.js，这个文件和前面的例子没有任何变化，它做的工作只是搭建应用框架，把子组件Counter和Summary渲染出来，和Store一点关系都没有，这个文件既没有导入Store，也没有支持关于store的props。
+
+在src/views/Counter.js中，我们可以看到对context的使用。作为傻瓜组件的Counter是一个无状态组件，它也不需要和Store牵扯什么关系，和之前的代码一模一样，有变化的是CounterContainer部分。
+
+为了让CounterContainer能够访问context，必须给CounterContainer类的contextTypes赋值和Provider.childContextTypes一样的值，两者必须一致，不然就无法访问到context，代码如下：
+
+```js
+CounterContainer.contextTypes = {
+  store: PropTypes.object
+}
+```
+
+在CounterContainer中，所有对store的访问，都是通过this.context.store完成的，因为this.context就是Provider提供的context对象，所以getOwnState函数代码如下：
+
+```js
+getOwnState() {
+  return {
+    value: this.context.store.getState()[this.props.caption]
+  };
+}
+```
+
+还有一点，因为我们自己定义了构造函数，所以要用上第二个参数context，代码如下：
+
+```js
+constructor(props, context) {
+  super(props, context);
+  ...
+}
+```
+
+在调用super的时候，一定要带上context参数，这样才能让React组件初始化实例中的context，不然组件的其它部分就无法使用this.context。
+
+要求constructor显式声明props和context两个参数然后又传递给super看起来很麻烦，我们的代码似乎只是一个参数的搬运工，而且将来可能有新的参数出现那样又要修改这部分代码，我们可以用下面的方法一劳永逸地解决这个问题。
+
+```js
+constructor() {
+  super(...arguments);
+}
+```
+
+我们不能直接使用arguments，因为在JavaScript中arguments表现得像是一个数组而不是分开的一个个参数，但是我们通过扩展标识符就能把arguments彻底变成传递给super的参数。
+
+在结束之前，让我们重新审视一下Context这个功能，Context这个功能相当于提供了一个全局可以访问的对象，但是全局对象或者说全局变量肯定是我们应该避免的用法，只要有一个地方改变了全局对象的值，应用中其它部分就会受影响，那样整个程序的运行结果就完全不可预测了。
+
+所以，单纯来看React的这个Context功能的话，必须强调这个功能要谨慎使用，只有对那些每个组件都可能使用，但是中间组件又可能不使用的对象才有必要使用Context，千万不要滥用。
+
+对于Redux，因为Redux的Store封装得很好，没有提供直接修改状态的功能，就是说一个组件虽然能够访问全局唯一的Store，却不可能直接修改Store中的状态，这样部分克服了作为全局对象的缺点。而且，一个应用只有一个Store，这个Store是Context里唯一需要的东西，并不算滥用，所以，使用Context来传递Store是一个不错的选择。
+
+#### 4. React-Redux
+
 
 
 ---
