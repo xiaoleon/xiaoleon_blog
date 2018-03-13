@@ -685,4 +685,4 @@ React利用prop来定义组件的对外接口，用state来代表内部的状态
 
 ### 参考文献
 
-1. [《深入浅出React和Redux —— 程墨》]()
+1. [《深入浅出React和Redux —— 程墨》](/resources/深入浅出React和Redux.pdf)

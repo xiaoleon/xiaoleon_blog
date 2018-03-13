@@ -415,4 +415,4 @@ React等于强制所有组件都按照这种由数据驱动渲染的模式来工
 
 ### 参考文献
 
-1. [《深入浅出React和Redux —— 程墨》]()
+1. [《深入浅出React和Redux —— 程墨》](/resources/深入浅出React和Redux.pdf)

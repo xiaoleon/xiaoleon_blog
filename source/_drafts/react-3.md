@@ -1033,23 +1033,111 @@ constructor() {
 
 对于Redux，因为Redux的Store封装得很好，没有提供直接修改状态的功能，就是说一个组件虽然能够访问全局唯一的Store，却不可能直接修改Store中的状态，这样部分克服了作为全局对象的缺点。而且，一个应用只有一个Store，这个Store是Context里唯一需要的东西，并不算滥用，所以，使用Context来传递Store是一个不错的选择。
 
-#### 4. React-Redux
+#### 5. React-Redux
 
+在上面两节中，我们了解了改进React应用的两个方法，第一是把一个组件拆分为容器组件和傻瓜组件，第二是使用React的Context来提供一个所有组件都可以直接访问的Context，也不难发现，这两种方法都有套路，完全可以把套路部分抽取出来复用，这样每个组件的开发只需要关注于不同的部分就可以了。
 
+实际上，已经有这样的一个库来完成这些工作了，这个库就是react-redux。
+
+在本书的chapter-03/react-redux目录下，可以看到利用react-redux实现的ControlPanel版本，因为使用了react-redux，所以它是所有实现方式中代码最精简的一个例子。
+
+我们只看不同的部分，在src/index.js中，代码几乎和react_with_context一模一样，唯一的区别就是我们不再使用自己实现的Provider，而是从react-redux库导入Provider，代码如下：
+
+```js
+import {Provider} from 'react-redux';
+```
+
+有了react-redux，视图文件src/views/Counter.js和src/Summary.js中的代码可以变得相当简洁。
+
+在前面的redux_smart_dumb和redux_with_context例子中，我们实际上分别实现了react-redux的两个最主要的功能：
+
+* connect：连接容器组件和傻瓜组件
+
+* Provider：提供包含store的context
+
+现在我们直接使用react-redux提供的这两个功能了，让我们分别来详细介绍。
+
+* 1) connect
+
+以Counter组件为例，和redux_with_context中的代码不同，react-redux的例子中没有定义CounterContainer这样命名的容器组件，而是直接导出了这样一个语句。
+
+```js
+export default connect(mapStateToProps, mapDispatchToProps)(Counter);
+```
+
+第一眼看去，会让人觉得这不是正常的JavaScript语法。其实，connect是react-redux提供的一个方法，这个方法接收两个参数mapStateToProps和mapDispatchToProps，执行结果依然是一个函数，所以才可以在后面又加一个圆括号，把connect函数执行的结果立刻执行，这一次参数是Counter这个傻瓜组件。
+
+这里有两次函数执行，第一次是connect函数的执行，第二次是把connect函数返回的函数再次执行，最后产生的就是容器组件，功能相当于redux_smart_dumb中的CounterContainer。
+
+当然，我们也可以把connect的结果赋值给一个变量CounterContainer，然后再export这个CounterContainer，只是connect已经大大简化了代码，习惯上可以直接导出函数执行结果，也不用纠结如何命名这个变量。
+
+这个connect函数具体做了什么工作呢？
+
+作为容器组件，要做的工作无外乎两件事：
+
+* 把Store上的状态转化为内层傻瓜组件的props
+
+* 把内层傻瓜组件中的用户动作转化为派送给store的动作
+
+这两个工作一个是内层傻瓜对象的输入，一个是内层傻瓜对象的输出。
+
+这两个工作的套路也很明显，把Store上的状态转化为内层组件的props，其实就是一个映射关系，去掉框架，最后就是一个mapStateToProps函数该做的事情。这个函数命名是业界习惯，因为它只是一个模块内的函数，所以实际上叫什么函数都行，如果觉得mapStateToProps这个函数名太长，也可以叫mapState，也是业界惯常的做法。
+
+Counter组件对应的mapStateToProps函数代码如下：
+
+```js
+function mapStateToProps(state, ownProps) {
+  return {
+    value: state[ownProps.caption]
+  }
+}
+```
+
+把内层傻瓜组件中用户动作转化为派送给Store的动作，也就是把内层傻瓜组件暴露出来的函数类型的prop关联上dispatch函数的调用，每个prop代表的回调函数的主要区别就是dispatch函数的参数不同，这就是mapDispatchToProps函数做的事情，和mapStateToProps一样，这么长的函数名只是习惯问题，mapDispatchToProps也可以叫作mapDispatch。
+
+Counter组件对应的mapDispathToProps函数代码如下：
+
+```js
+function mapDispatchToProps(dispatch, ownProps) {
+  return {
+    onIncrement: () => {
+      dispatch(Actions.increment(ownProps.caption));
+    },
+    onDecrement: () => {
+      dispatch(Actions.decrement(ownProps.caption));
+    }
+  }
+}
+```
+
+mapStateToProps和mapDispatchToProps都可以包含第二个参数，代表ownProps，也就是直接传递给外层容器组件的props，在ControlPanel的例子中没有用到，我们在后续章节中会有详细介绍。
+
+* 2) Provider
+
+我们在redux_with_context中已经完整实现了一个Provider，react-redux和我们例子中的Provider几乎一样，但是更加严谨，比如我们只要求store属性是一个object，而react-redux要求store不光是一个object，而且是必须包含三个函数的object，这三个函数分别是：
+
+* subscribe
+
+* dispatch
+
+* getState
+
+拥有上述三个函数的对象，才能称之为一个Redux的store。
+
+另外，react-redux定义了Provider的componentWillReceiveProps函数，在React组件的生命周期中，componentWillReceiveProps函数在每次重新渲染时都会调用到，react-redux在componentWillReceiveProps函数中会检查这一次渲染时代表store的prop和上一次的是否一样。如果不一样，就会给出警告，这样做是为了避免多次渲染用了不同的Redux Store。每个Redux应用只能有一个Redux Store，在整个Redux的生命周期中都应该保持Store的唯一性。
 
 ---
 
-### 三、
+### 三、本章小结
 
-<!-- Todo -->
+在这一章中，我们首先从Redux的鼻祖Flux框架出发，通过创造一个ControlPanel的例子，了解了Flux“单向数据流”的原则。如果只由React来管理数据流，就很难管理拥有很多组件的大型应用，传统的MVC框架也有其缺陷，很容易写乱套，所以Flux是应用架构的一个巨大改进，但是Flux也有其缺点。
 
+Redux是Flux框架的一个巨大改进，Redux强调单一数据源、保持状态只读和数据改变只能通过纯函数完成的基本原则，和React的`UI=render(state)`思想完全契合。我们在这一章中用不同方法，循序渐进的改进了ControlPanel这个应用的例子，为的就是更清晰地理解每个改进背后的动因，最后，我们终于通过react-redux完成了React和Redux的融合。
+
+但是，这只是一个开始。接下来，我们将看到更加深入的React和Redux实践知识。
 
 ---
-
-### 四、
-
-<!-- Todo -->
 
 ### 参考文献
 
-1. [《深入浅出React和Redux —— 程墨》]()
+1. [《深入浅出React和Redux —— 程墨》](/resources/深入浅出React和Redux.pdf)
