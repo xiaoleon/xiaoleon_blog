@@ -1,5 +1,5 @@
 ---
-title: React(3) 模块化React和Redux应用
+title: React(4) 模块化React和Redux应用
 categories:
   - React抄书笔记
 tags:
@@ -991,7 +991,115 @@ onSubmit(ev) {
 
 ### 六、开发辅助工具
 
+我们已经写了一个比较复杂的基于React和Redux的应用，将来还会遇到更复杂的应用，是时候引入一些开发辅助工具了，毕竟没有人能够一次把复杂代码写对，必要的工具能够大大提高我们的工作效率。
 
+#### 1. Chrome扩展包
+
+Chrome是网页应用开发者群体最喜爱的浏览器，因为Chrome浏览器有丰富的扩展库来帮助网页开发，这里我们介绍三款Chrome扩展包，可以说是React和Redux应用开发必备之物。
+
+* React Devtools，可以检视React组件的树形结构
+
+* Redux Devtools，可以检视Redux数据流，可以将Store状态跳跃到任何一个历史状态，也就是所谓的“时间旅行”功能
+
+* React Perf，可以发现React组件渲染的性能问题
+
+#### 2. redux-immutable-state-invariant辅助包
+
+我们曾经反复强调过，每一个reducer函数都必须是一个纯函数，不能修改传入的参数state和action，否则会让应用重新陷入状态不可预料的境地。
+
+禁止reducer函数修改参数，这是一个规则，规则总是会被无心违反的，但是怎么避免开发者不小心违反这个规则呢？
+
+有一个redux-immutable-state-invariant包，提供了一个Redux的中间件，能够让Redux在每次派发动作之后做一个检查。如果发现某个reducer违反了作为一个纯函数的规定擅自修改了参数state，就会给一个大大的错误警告，从而让开发者意识到自己犯了一个错误，必须要修正。
+
+什么是Redux的中间件？我们在后面的章节会详细介绍，在这里我们只要理解中间件是可以增强Redux的Store实例功能的一种方法就可以。
+
+很明显，对于redux-immutable-state-invariant的这种检查，在开发环境下很有用。但是在产品环境下，这样的出错提示意义不大，只是徒耗计算资源和增大JavaScript代码提及，所以我们通常在产品环境中不启用redux-immutable-state-invariant。
+
+#### 3. 工具应用
+
+上面我们介绍了辅助开发的Chrome扩展包和redux-immutable-state-variant库，对于React Devtools来说，启用只是安装一个Chrome扩展包的事，但是对于其余几个工具，我们的代码需要做一些修改才能配合浏览器使用。
+
+因为Store是Redux应用的核心，所以所有的代码修改都集中在src/Store.js中。
+
+首先需要从Redux引入多个函数，代码如下：
+
+```js
+import {createStore, combineReducers, applyMiddleware, compose} from 'redux';
+```
+
+为了使用React Perf插件，需要添加如下代码：
+
+```js
+import Perf from 'react-addons-perf'
+
+const win = window;
+
+win.Perf - Perf;
+```
+
+在这里把window赋值给模块级别变量win，是为了帮助代码缩小器（minifer），在webpack中缩小代码的插件叫UglifyJsPlugin，能够将局部变量名改成很短的变量名，这样功能不受影响但是代码的大小大大缩减。
+
+不过，和所有的代码缩小器一样，UglifyJsPlugin不敢去改变全局变量名，因为改了就会影响程序的功能。所以当多次引用window这样的全局变量时，最好在模块开始将window赋值给一个变量，比如win，然后在代码其它部分只使用win，这样最终经过UglifyJsPlugin产生的缩小代码就只包含一个无法缩小的window变量。
+
+我们给win上的Perf赋值了从react-addons-perf上导入的内容，这是为了帮助React Perf扩展包的使用，做了这个代码修改之后，React Perf上的Start按钮和Stop按钮才会起作用。
+
+为了应用redux-immutable-state-invariant中间件和Redux Devtools，需要使用Redux的Store Enhancer功能，代码如下：
+
+```js
+const reducer = combineReducers({
+  todos: todoReducer,
+  filter: filterReducer
+});
+
+const middlewares = [];
+
+if (process.env.NODE_ENV !== 'production') {
+  middlewares.push(require('redux-immutable-state-invariant')());
+}
+
+const storeEnhancers = compose(
+  applyMiddleware(...middlewares),
+  (win && win.devToolsExtension) ? win.devToolExtension() : (f) => f
+);
+
+export default createStore(reducer, {}, storeEnhancers);
+```
+
+代码修改的关键在于给createStore函数增加了第三个参数storeEnhancers，这个参数代表Store Enhancer的意思，能够让createStore函数产生的Store对象具有更多更强的功能。
+
+因为Store Enhancer可能有多个，在我们的例子中就有两个，所以Redux提供了一个compose函数，用于把多个Store Enhancer组合在一起，我们分别来看这两个Store Enhancer是什么。
+
+第一个Store Enhancer是一个函数applyMiddleware的执行结果，这个函数接受一个数组作为参数，每个元素都是一个Redux的中间件。虽然目前我们只应用了一个中间件，但是考虑到将来会扩展更多，所以我们用数组变量middlewares来存储所有的中间件，将来要扩展新的中间件只需要往这个数组中push新的元素就可以了。
+
+目前，往middlewares中push的唯一一个中间件就是redux-immutable-state-invariant。如同上面解释过的，redux-immutable-state-invariant只有在开发环境下使用才有意义，所以只有当process.env.NODE_ENV不等于production时才加入这个中间件。
+
+我们一直按照ES6的语法导入模块，也就是用import关键字导入模块，但是在这里却用了Node传统风格require，是因为import语句不能够存在于条件语句之中，只能出现在模块语句的顶层位置。
+
+第二个Store Enhancer就是Redux Devtools，因为Redux Devtools的工作原理是截获所有应用中Redux Store的动作和状态变化，所以必须通过Store Enhancer在Redux Store中加入钩子。
+
+如果浏览器中安装了Redux Devtools，在全局window对象上就有一个devToolsExtension代表Redux Devtools。但是，我们也要让没有安装这个扩展包的浏览器也能正常使用我们的应用，所以要根据window.devToolsExtension是否存在做一个判断，如果有就用，如果没有就插入一个什么都不做的函数。
+
+```js
+(win && win.devToolsExtension) ? win.devToolsExtension() : (f) => f
+```
+
+当所有的代码修改完毕，重新启动Todo应用，在浏览器的开发者工具中就可以使用所有关于React和Redux的工具了。
+
+---
+
+### 七、本章小结
+
+在这一章，我们学习了构建一个完整Redux应用的步骤和需要考虑的方面。
+
+首先，要考虑代码文件的组织方式，对于可以高度模块化的Redux应用，使用“按功能组织”的方式要优于传统MVC框架下“按角色组织”的方式。
+
+之后，要考虑Store上状态树的设计，因为状态树的结构直接决定了模块的划分，以及action类型、action构造函数和reducer的设计。可以说，开始写Redux应用第一行代码之前，首先要想好Store的状态树长得什么样子。
+
+然后，我们实际构建了一个Todo应用，这个应用要比之前的ControlPanel应用复杂，利用划分模块的方法解决才是正道，从中我们也学习了React的ref功能，以及动态数量的子空间必须要包含key属性。
+
+最后，我们了解了开发React和Redux应用必备的几样辅助工具，有了这几样工具，开发React和Redux应用就会如虎添翼。
+
+这只是个起点，在接下来的章节中，我们会进一步深入了解React和Redux的精髓。
 
 ---
 
